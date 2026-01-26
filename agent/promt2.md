@@ -17,3 +17,5 @@ Constraints:
 Wire it in:
 - Export domain index from src/domain/index.ts
 - Ensure tests import from the public exports, not deep paths where possible.
+
+Reminder: After completing tasks, check off relevant items in agent/todo.md.
