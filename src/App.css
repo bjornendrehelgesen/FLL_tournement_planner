@@ -170,6 +170,150 @@ button:disabled {
   padding-left: 1.2rem;
 }
 
+.result {
+  margin-top: 1.25rem;
+  border-radius: 14px;
+  padding: 1.1rem 1.2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.result.success {
+  background: #f1f6f0;
+  color: #1b4d32;
+}
+
+.result.error {
+  background: #fff4f2;
+  color: #7a271a;
+}
+
+.result-header h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+}
+
+.result-header p {
+  margin: 0;
+  color: inherit;
+  opacity: 0.8;
+}
+
+.result-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.8rem;
+}
+
+.metric-label {
+  display: block;
+  font-size: 0.85rem;
+  opacity: 0.75;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.metric-value {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+  color: inherit;
+}
+
+.panel-title {
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+}
+
+.panel ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.panel li {
+  margin-bottom: 0.45rem;
+}
+
+.panel li:last-child {
+  margin-bottom: 0;
+}
+
+.panel.errors li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.panel.suggestions li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.schedule-table .panel-title {
+  margin-bottom: 0.75rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  min-width: 720px;
+}
+
+.table-wrap th,
+.table-wrap td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid rgba(27, 37, 56, 0.1);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table-wrap thead th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
+
+.table-wrap tbody th {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.table-wrap tbody tr:last-child th,
+.table-wrap tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: rgba(122, 39, 26, 0.15);
+  color: inherit;
+}
+
+.apply-button {
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+}
+
 @media (max-width: 720px) {
   .app {
     padding: 2rem 1rem 3rem;

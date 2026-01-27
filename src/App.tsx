@@ -3,11 +3,13 @@ import { useMemo, useState } from "react";
 import { generateSchedule, validateSetup } from "./engine";
 import { formatLocalDateTime, parseLocalDateTime } from "./domain/time";
 import type {
+  Assignment,
   GenerateScheduleResult,
+  SuggestionAction,
   Team,
   TournamentSetup,
 } from "./domain";
-import { AssignmentType } from "./domain";
+import { AssignmentType, Track } from "./domain";
 
 const DEFAULT_DATE = new Date(2026, 0, 15, 9, 0, 0, 0);
 const DEFAULT_SETUP: TournamentSetup = {
@@ -29,6 +31,7 @@ const DEFAULT_SETUP: TournamentSetup = {
 };
 
 const DEFAULT_BREAK_MINUTES = 15;
+const ROBOT_MATCHES_PER_TEAM = 3;
 
 function buildTeams(count: number): Team[] {
   if (!Number.isFinite(count) || count <= 0) return [];
@@ -47,6 +50,75 @@ function FieldErrors({ errors }: { errors: string[] }) {
       ))}
     </ul>
   );
+}
+
+function formatShortTime(valueMs: number): string {
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(valueMs));
+}
+
+function formatTimeRange(startMs: number, endMs: number): string {
+  return `${formatShortTime(startMs)} - ${formatShortTime(endMs)}`;
+}
+
+function formatAssignmentCell(
+  assignment: Assignment | null,
+  slotById: Map<string, { startMs: number; endMs: number }>,
+  resourceLabel: string
+): string {
+  if (!assignment) return "TBD";
+  const slot = slotById.get(assignment.slotId);
+  const timeLabel = slot
+    ? formatTimeRange(slot.startMs, slot.endMs)
+    : "Time TBD";
+  const resourceText = assignment.resourceId
+    ? `${resourceLabel} ${assignment.resourceId}`
+    : resourceLabel;
+  return `${timeLabel} | ${resourceText}`;
+}
+
+function formatSuggestion(suggestion: SuggestionAction): string {
+  switch (suggestion.action) {
+    case "INCREASE_ROBOT_TABLES":
+      return suggestion.by
+        ? `Increase robot tables by ${suggestion.by}.`
+        : "Increase robot tables.";
+    case "INCREASE_PRESENTATION_ROOMS":
+      return suggestion.by
+        ? `Increase presentation rooms by ${suggestion.by}.`
+        : "Increase presentation rooms.";
+    case "EXTEND_ROBOT_END_TIME":
+      return suggestion.minutes
+        ? `Extend robot end time by ${suggestion.minutes} minutes.`
+        : "Extend robot end time.";
+    case "EXTEND_PRESENTATION_END_TIME":
+      return suggestion.minutes
+        ? `Extend presentation end time by ${suggestion.minutes} minutes.`
+        : "Extend presentation end time.";
+    case "REDUCE_MIN_GAP":
+      return suggestion.minutes
+        ? `Reduce minimum gap by ${suggestion.minutes} minutes.`
+        : "Reduce minimum gap requirement.";
+    case "ADD_BREAK": {
+      const trackLabel =
+        suggestion.track === Track.ROBOT ? "robot" : "presentation";
+      const windowLabel = `${formatLocalDateTime(
+        suggestion.window.startMs
+      )} to ${formatLocalDateTime(suggestion.window.endMs)}`;
+      return `Add a ${trackLabel} break from ${windowLabel}.`;
+    }
+    case "ADJUST_BREAKS": {
+      const trackLabel =
+        suggestion.track === Track.ROBOT ? "robot" : "presentation";
+      return `Adjust ${trackLabel} break timing.`;
+    }
+    default: {
+      const exhaustiveCheck: never = suggestion;
+      return `${exhaustiveCheck}`;
+    }
+  }
 }
 
 function App() {
@@ -136,8 +208,53 @@ function App() {
           robots: scheduleResult.schedule.assignments.filter(
             (assignment) => assignment.type === AssignmentType.ROBOT_MATCH
           ).length,
+          warnings: scheduleResult.schedule.warnings,
         }
       : null;
+
+  const scheduleTableRows = useMemo(() => {
+    if (!scheduleResult || !scheduleResult.ok) return [];
+    const { assignments, slots } = scheduleResult.schedule;
+    const slotById = new Map(
+      slots.map((slot) => [slot.id, { startMs: slot.startMs, endMs: slot.endMs }])
+    );
+    const teamsById = new Map(setup.teams.map((team) => [team.id, team]));
+    const teamIds = Array.from(new Set(assignments.map((assignment) => assignment.teamId)))
+      .sort((a, b) => a - b);
+
+    return teamIds.map((teamId) => {
+      const robotMatches = Array.from(
+        { length: ROBOT_MATCHES_PER_TEAM },
+        () => null as Assignment | null
+      );
+      let presentation: Assignment | null = null;
+
+      for (const assignment of assignments) {
+        if (assignment.teamId !== teamId) continue;
+        if (assignment.type === AssignmentType.PRESENTATION) {
+          presentation = assignment;
+          continue;
+        }
+        if (
+          assignment.type === AssignmentType.ROBOT_MATCH &&
+          assignment.sequence &&
+          assignment.sequence >= 1 &&
+          assignment.sequence <= ROBOT_MATCHES_PER_TEAM
+        ) {
+          robotMatches[assignment.sequence - 1] = assignment;
+        }
+      }
+
+      const teamLabel = teamsById.get(teamId)?.name ?? `Team ${teamId}`;
+      return {
+        teamId,
+        teamLabel,
+        presentation,
+        robotMatches,
+        slotById,
+      };
+    });
+  }, [scheduleResult, setup.teams]);
 
   return (
     <div className="app">
@@ -438,24 +555,125 @@ function App() {
           </button>
 
           {scheduleResult && scheduleResult.ok && scheduleSummary && (
-            <div className="summary">
-              <p>Draft schedule ready.</p>
-              <p>Presentation slots: {scheduleSummary.presentations}</p>
-              <p>Robot matches: {scheduleSummary.robots}</p>
-              <p>
-                Total assignments: {scheduleSummary.presentations + scheduleSummary.robots}
-              </p>
+            <div className="result success">
+              <div className="result-header">
+                <h3>Valid schedule generated</h3>
+                <p>Counts and warnings are ready to review.</p>
+              </div>
+              <div className="result-metrics">
+                <div>
+                  <span className="metric-label">Presentation slots</span>
+                  <span className="metric-value">
+                    {scheduleSummary.presentations}
+                  </span>
+                </div>
+                <div>
+                  <span className="metric-label">Robot matches</span>
+                  <span className="metric-value">{scheduleSummary.robots}</span>
+                </div>
+                <div>
+                  <span className="metric-label">Total assignments</span>
+                  <span className="metric-value">
+                    {scheduleSummary.presentations + scheduleSummary.robots}
+                  </span>
+                </div>
+              </div>
+              <div className="panel warnings">
+                <div className="panel-title">Warnings</div>
+                {scheduleSummary.warnings.length === 0 ? (
+                  <p className="hint">No warnings detected.</p>
+                ) : (
+                  <ul>
+                    {scheduleSummary.warnings.map((warning) => (
+                      <li key={warning}>{warning}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className="panel schedule-table">
+                <div className="panel-title">Team schedule</div>
+                {scheduleTableRows.length === 0 ? (
+                  <p className="hint">No assignments to show yet.</p>
+                ) : (
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th scope="col">Team</th>
+                          <th scope="col">Presentation (time + room)</th>
+                          <th scope="col">Robot match 1 (time + table)</th>
+                          <th scope="col">Robot match 2 (time + table)</th>
+                          <th scope="col">Robot match 3 (time + table)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {scheduleTableRows.map((row) => (
+                          <tr key={row.teamId}>
+                            <th scope="row">{row.teamLabel}</th>
+                            <td>
+                              {formatAssignmentCell(
+                                row.presentation,
+                                row.slotById,
+                                "Room"
+                              )}
+                            </td>
+                            {row.robotMatches.map((match, index) => (
+                              <td key={`${row.teamId}-match-${index + 1}`}>
+                                {formatAssignmentCell(
+                                  match,
+                                  row.slotById,
+                                  "Table"
+                                )}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           {scheduleResult && !scheduleResult.ok && (
-            <div className="summary error">
-              <p>Unable to generate schedule:</p>
-              <ul>
-                {scheduleResult.errors.map((error) => (
-                  <li key={error.code}>{error.message}</li>
-                ))}
-              </ul>
+            <div className="result error">
+              <div className="result-header">
+                <h3>Unable to generate schedule</h3>
+                <p>Review errors and suggestions to adjust the setup.</p>
+              </div>
+              <div className="panel errors">
+                <div className="panel-title">Errors</div>
+                <ul>
+                  {scheduleResult.errors.map((error) => (
+                    <li key={`${error.code}-${error.message}`}>
+                      <span className="pill">{error.code}</span>
+                      <span>{error.message}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="panel suggestions">
+                <div className="panel-title">Suggestions</div>
+                {scheduleResult.suggestions.length === 0 ? (
+                  <p className="hint">No suggestions available yet.</p>
+                ) : (
+                  <ul>
+                    {scheduleResult.suggestions.map((suggestion, index) => (
+                      <li key={`${suggestion.action}-${index}`}>
+                        <span>{formatSuggestion(suggestion)}</span>
+                        <button
+                          type="button"
+                          className="ghost apply-button"
+                          disabled
+                        >
+                          Apply
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
           )}
         </section>
