@@ -19,3 +19,5 @@ Write thorough unit tests:
 Wire it in:
 - Add a tiny function in App that calls validateSetup on a hard-coded setup and renders “Setup OK” vs first error code.
 - Keep UI minimal; we just want validation integrated.
+
+done

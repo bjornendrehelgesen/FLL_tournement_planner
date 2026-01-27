@@ -18,3 +18,5 @@ Unit tests:
 
 Wire it in:
 - In App, render “Robot slots: X” and “Robot capacity: Y (sum of active tables)” for the hard-coded setup.
+
+Done

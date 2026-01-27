@@ -24,3 +24,5 @@ Unit tests:
 
 Wire it in:
 - Create a small hard-coded invalid schedule in App and render “Conflicts: X”.
+
+Done

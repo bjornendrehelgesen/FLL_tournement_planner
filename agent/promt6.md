@@ -19,3 +19,5 @@ Unit tests:
 
 Wire it in:
 - App should show either “Capacity OK” or list the feasibility error codes.
+
+Done

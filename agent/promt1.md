@@ -20,3 +20,5 @@ Deliverables:
 
 Wire it in:
 - Ensure App is used by main.tsx and tests actually run in CI-like mode.
+
+Done

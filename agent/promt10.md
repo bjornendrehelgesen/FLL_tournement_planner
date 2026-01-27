@@ -24,3 +24,5 @@ Unit tests:
 
 Wire it in:
 - App “Generate schedule” should show either “Schedule valid” or structured error codes + suggestion labels.
+
+Done

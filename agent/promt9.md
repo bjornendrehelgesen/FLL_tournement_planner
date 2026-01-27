@@ -18,3 +18,5 @@ Unit tests:
 Wire it in:
 - Update generateSchedule.ts to also assign robot matches.
 - App should display counts: presentations=N, robot=3N, total=4N.
+
+in prosess

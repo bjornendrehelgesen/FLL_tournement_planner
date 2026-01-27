@@ -20,3 +20,5 @@ Wire it in:
   - assigns presentations (only)
   - returns draft schedule object {slots, assignments, warnings:[]}
 - App: button “Generate Draft” that uses hard-coded setup and shows count of presentation assignments.
+
+In progress

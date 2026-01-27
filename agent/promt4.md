@@ -19,3 +19,5 @@ Unit tests:
 
 Wire it in:
 - In App, render “Presentation slots: X” for the hard-coded setup from earlier.
+
+Done
