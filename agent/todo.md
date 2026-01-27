@@ -7,74 +7,74 @@
 
 ## 0) Repo + Quality Baseline
 
-- [ ] Create Vite + React + TypeScript app
+- [x] Create Vite + React + TypeScript app
 - [ ] Add formatting/linting (optional but recommended)
-  - [ ] ESLint configured for TS/React
+  - [x] ESLint configured for TS/React
   - [ ] Prettier configured
   - [ ] `lint` script passes
 - [ ] Add testing toolchain
-  - [ ] Vitest configured
-  - [ ] Testing Library configured (if using component tests)
-  - [ ] fast-check configured (property tests)
-  - [ ] Playwright configured (e2e)
+  - [x] Vitest configured
+  - [x] Testing Library configured (if using component tests)
+  - [x] fast-check configured (property tests)
+  - [x] Playwright configured (e2e)
 - [ ] Add npm scripts:
-  - [ ] `test`
-  - [ ] `test:watch`
-  - [ ] `test:e2e`
-  - [ ] `build`
-  - [ ] `dev`
-- [ ] Minimal App renders “FLL Tournament Planner”
-- [ ] Unit smoke test: App header renders
-- [ ] Playwright smoke test: page loads and finds header text
+  - [x] `test`
+  - [x] `test:watch`
+  - [x] `test:e2e`
+  - [x] `build`
+  - [x] `dev`
+- [x] Minimal App renders “FLL Tournament Planner”
+- [x] Unit smoke test: App header renders
+- [x] Playwright smoke test: page loads and finds header text
 
 ---
 
 ## 1) Domain Model + Utilities
 
 ### 1.1 Domain types
-- [ ] Create `src/domain/` and export barrel `src/domain/index.ts`
-- [ ] Define core types (aligning with spec):
-  - [ ] `TournamentSetup`
-  - [ ] `Slot`
-  - [ ] `Assignment`
-  - [ ] Enums: `Track`, `AssignmentType`
-- [ ] Define breaks type:
-  - [ ] `BreakInterval { start, end }`
-- [ ] Define schedule result types:
-  - [ ] `ValidSchedule { slots, assignments, warnings }`
-  - [ ] `ScheduleFailure { errors, suggestions }`
+- [x] Create `src/domain/` and export barrel `src/domain/index.ts`
+- [x] Define core types (aligning with spec):
+  - [x] `TournamentSetup`
+  - [x] `Slot`
+  - [x] `Assignment`
+  - [x] Enums: `Track`, `AssignmentType`
+- [x] Define breaks type:
+  - [x] `BreakInterval { start, end }`
+- [x] Define schedule result types:
+  - [x] `ValidSchedule { slots, assignments, warnings }`
+  - [x] `ScheduleFailure { errors, suggestions }`
 
 ### 1.2 Errors + suggestions model
-- [ ] Define validation error model:
-  - [ ] `ValidationError { code, message, path }`
-- [ ] Define feasibility error codes (from spec):
-  - [ ] `INSUFFICIENT_ROBOT_CAPACITY`
-  - [ ] `INSUFFICIENT_PRESENTATION_CAPACITY`
-  - [ ] `NO_VALID_ASSIGNMENT_WITH_GAP_CONSTRAINTS`
-  - [ ] `UNSATISFIABLE_OVERLAP_CONSTRAINTS`
-- [ ] Define input validation error codes (from spec):
-  - [ ] teams <= 1
-  - [ ] tables/rooms < 1
-  - [ ] start >= end
-  - [ ] breaks invalid (start>=end, outside window, overlaps)
-  - [ ] min gap < 15
-- [ ] Define suggestion actions:
-  - [ ] Increase tables
-  - [ ] Increase rooms
-  - [ ] Extend robot end time
-  - [ ] Extend presentation end time
-  - [ ] Reduce min gap (only if > 15)
-  - [ ] Apply suggested breaks (requires acceptance)
+- [x] Define validation error model:
+  - [x] `ValidationError { code, message, path }`
+- [x] Define feasibility error codes (from spec):
+  - [x] `INSUFFICIENT_ROBOT_CAPACITY`
+  - [x] `INSUFFICIENT_PRESENTATION_CAPACITY`
+  - [x] `NO_VALID_ASSIGNMENT_WITH_GAP_CONSTRAINTS`
+  - [x] `UNSATISFIABLE_OVERLAP_CONSTRAINTS`
+- [x] Define input validation error codes (from spec):
+  - [x] teams <= 1
+  - [x] tables/rooms < 1
+  - [x] start >= end
+  - [x] breaks invalid (start>=end, outside window, overlaps)
+  - [x] min gap < 15
+- [x] Define suggestion actions:
+  - [x] Increase tables
+  - [x] Increase rooms
+  - [x] Extend robot end time
+  - [x] Extend presentation end time
+  - [x] Reduce min gap (only if > 15)
+  - [x] Apply suggested breaks (requires acceptance)
 
 ### 1.3 Time representation + helpers (choose one consistently)
-- [ ] Decide: store times as epoch ms or ISO strings (document it)
-- [ ] Implement `src/domain/time/*` helpers:
-  - [ ] `addMinutes`
-  - [ ] `diffMinutes`
-  - [ ] `overlaps(intervalA, intervalB)`
-  - [ ] `withinWindow(time, start, end)`
-  - [ ] parsing/format helpers for `datetime-local`
-- [ ] Unit tests for time helpers (edge cases around boundaries)
+- [x] Decide: store times as epoch ms or ISO strings (document it)
+- [x] Implement `src/domain/time/*` helpers:
+  - [x] `addMinutes`
+  - [x] `diffMinutes`
+  - [x] `overlaps(intervalA, intervalB)`
+  - [x] `withinWindow(time, start, end)`
+  - [x] parsing/format helpers for `datetime-local`
+- [x] Unit tests for time helpers (edge cases around boundaries)
 
 ---
 

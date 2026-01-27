@@ -1,2 +1,3 @@
-export type * from "./types";
-export type * from "./errors";
+export * from "./types";
+export * from "./errors";
+export * from "./time";

@@ -3,10 +3,18 @@ import { validateSetup } from "./engine";
 import type { TournamentSetup } from "./domain";
 
 const setup: TournamentSetup = {
-  teams: [{ id: "T1", name: "Team 1" }],
-  tracks: ["table-1"],
-  startMs: 0,
-  slotDurationMs: 10 * 60 * 1000,
+  teams: [{ id: 1, name: "Team 1" }],
+  robotTablesCount: 4,
+  robotStartMs: new Date(2026, 0, 15, 9, 0, 0, 0).getTime(),
+  robotEndMs: new Date(2026, 0, 15, 12, 0, 0, 0).getTime(),
+  robotBreaks: [],
+  presentationRoomsCount: 2,
+  presentationStartMs: new Date(2026, 0, 15, 9, 30, 0, 0).getTime(),
+  presentationEndMs: new Date(2026, 0, 15, 12, 30, 0, 0).getTime(),
+  presentationBreaks: [],
+  minGapMinutes: 15,
+  suggestBreaks: false,
+  suggestResources: false,
 };
 
 function App() {
