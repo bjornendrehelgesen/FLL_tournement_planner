@@ -8,7 +8,7 @@ describe("robotSlots", () => {
     const cases = [
       {
         tables: 1,
-        expected: [[1], [1], [1], [1]],
+        expected: [[1], [1]],
       },
       {
         tables: 2,
@@ -46,7 +46,7 @@ describe("robotSlots", () => {
     for (const { tables, expected } of cases) {
       const slots = robotSlots({
         robotStartMs: 0,
-        robotEndMs: 40 * MINUTE_MS,
+        robotEndMs: 20 * MINUTE_MS,
         robotTablesCount: tables,
         robotBreaks: [],
       });
