@@ -170,29 +170,29 @@
 
 ## 5) Schedule Validator (Manual mode foundation) (TDD)
 
-- [ ] Implement `validateSchedule(setup, slots, assignments)` returning `conflicts[]`
+- [x] Implement `validateSchedule(setup, slots, assignments)` returning `conflicts[]`
 
 ### 5.1 Conflict types
-- [ ] Team overlap (any overlap across team events)
-- [ ] Min gap violations across any two consecutive team events
-- [ ] Resource double-booking:
-  - [ ] Same slot + same table used twice
-  - [ ] Same slot + same room used twice
-- [ ] Invalid robot resource usage:
-  - [ ] robot assignment uses tableId not in that slot.tableIds
-- [ ] Assignment outside window or inside break (if possible from editing)
+- [x] Team overlap (any overlap across team events)
+- [x] Min gap violations across any two consecutive team events
+- [x] Resource double-booking:
+  - [x] Same slot + same table used twice
+  - [x] Same slot + same room used twice
+- [x] Invalid robot resource usage:
+  - [x] robot assignment uses tableId not in that slot.tableIds
+- [x] Assignment outside window or inside break (if possible from editing)
 
 ### 5.2 Message formatting (human readable)
-- [ ] Example overlap message: “Team 7 presentation overlaps robot match at 10:30”
-- [ ] Example gap message: “Team 4 gap between events is 10 minutes; minimum is 15”
+- [x] Example overlap message: “Team 7 presentation overlaps robot match at 10:30”
+- [x] Example gap message: “Team 4 gap between events is 10 minutes; minimum is 15”
 
 ### 5.3 Tests
-- [ ] Each conflict type isolated
-- [ ] Multiple conflicts returned
-- [ ] No conflicts for a known valid schedule fixture
+- [x] Each conflict type isolated
+- [x] Multiple conflicts returned
+- [x] No conflicts for a known valid schedule fixture
 
 ### 5.4 Wire into UI (temporary)
-- [ ] App renders “Conflicts: X” for a hard-coded invalid example
+- [x] App renders “Conflicts: X” for a hard-coded invalid example
 
 ---
 

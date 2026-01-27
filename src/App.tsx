@@ -1,8 +1,9 @@
 import "./App.css";
-import { capacityCheck, validateSetup } from "./engine";
+import { capacityCheck, validateSchedule, validateSetup } from "./engine";
 import { presentationSlots } from "./engine/slots/presentationSlots";
 import { robotSlots } from "./engine/slots/robotSlots";
-import type { TournamentSetup } from "./domain";
+import { AssignmentType, Track } from "./domain";
+import type { Assignment, Slot, TournamentSetup } from "./domain";
 
 const setup: TournamentSetup = {
   teams: [
@@ -21,6 +22,42 @@ const setup: TournamentSetup = {
   suggestBreaks: false,
   suggestResources: false,
 };
+
+const conflictSlots: Slot[] = [
+  {
+    id: "robot-930",
+    track: Track.ROBOT,
+    startMs: new Date(2026, 0, 15, 9, 30, 0, 0).getTime(),
+    endMs: new Date(2026, 0, 15, 9, 35, 0, 0).getTime(),
+    resources: { tableIds: [1] },
+  },
+  {
+    id: "presentation-930",
+    track: Track.PRESENTATION,
+    startMs: new Date(2026, 0, 15, 9, 30, 0, 0).getTime(),
+    endMs: new Date(2026, 0, 15, 10, 0, 0, 0).getTime(),
+    resources: { roomIds: [1] },
+  },
+];
+
+const conflictAssignments: Assignment[] = [
+  {
+    id: "conflict-robot",
+    teamId: 1,
+    type: AssignmentType.ROBOT_MATCH,
+    slotId: "robot-930",
+    resourceId: "1",
+    sequence: 1,
+  },
+  {
+    id: "conflict-presentation",
+    teamId: 1,
+    type: AssignmentType.PRESENTATION,
+    slotId: "presentation-930",
+    resourceId: "1",
+    sequence: null,
+  },
+];
 
 function App() {
   const validationResult = validateSetup(setup);
@@ -44,6 +81,11 @@ function App() {
     0,
   );
   const capacityResult = capacityCheck(setup);
+  const conflicts = validateSchedule(
+    setup,
+    conflictSlots,
+    conflictAssignments,
+  );
 
   return (
     <div className="app">
@@ -66,6 +108,7 @@ function App() {
         <p>Presentation slots: {presentationSlotsCount}</p>
         <p>Robot slots: {robotSlotsList.length}</p>
         <p>Robot capacity: {robotCapacity} (sum of active tables)</p>
+        <p>Conflicts: {conflicts.length}</p>
       </section>
     </div>
   );

@@ -70,6 +70,24 @@ export interface Schedule {
   assignments: Assignment[];
 }
 
+export const ScheduleConflictType = {
+  OVERLAP: "OVERLAP",
+  MIN_GAP: "MIN_GAP",
+  DOUBLE_BOOK_RESOURCE: "DOUBLE_BOOK_RESOURCE",
+  OUTSIDE_WINDOW: "OUTSIDE_WINDOW",
+  IN_BREAK: "IN_BREAK",
+} as const;
+export type ScheduleConflictType =
+  (typeof ScheduleConflictType)[keyof typeof ScheduleConflictType];
+
+export interface ScheduleConflict {
+  type: ScheduleConflictType;
+  message: string;
+  teamIds: TeamId[];
+  slotIds: SlotId[];
+  resourceIds: ResourceId[];
+}
+
 export type SuggestionAction =
   | { action: "INCREASE_ROBOT_TABLES"; by?: number }
   | { action: "INCREASE_PRESENTATION_ROOMS"; by?: number }
