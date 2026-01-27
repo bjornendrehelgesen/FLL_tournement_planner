@@ -441,12 +441,27 @@ button:disabled {
   font-weight: 700;
   border: 1px solid rgba(27, 37, 56, 0.12);
   background: rgba(255, 255, 255, 0.9);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .grid-cell.empty {
   font-weight: 600;
   color: #8a94a6;
   background: #f3f1ec;
+}
+
+.grid-cell.draggable {
+  cursor: grab;
+}
+
+.grid-cell.dragging {
+  cursor: grabbing;
+  transform: scale(0.98);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
+}
+
+.grid-cell.droppable-over {
+  border-color: rgba(15, 23, 42, 0.35);
 }
 
 .grid-cell.conflict {

@@ -1,6 +1,21 @@
 import "./App.css";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  DndContext,
+  PointerSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  pointerWithin,
+} from "@dnd-kit/core";
 import { generateSchedule, validateSchedule, validateSetup } from "./engine";
+import {
+  applyPresentationMove,
+  type PresentationDragData,
+  type PresentationDropData,
+} from "./presentationDnd";
 import { formatLocalDateTime, parseLocalDateTime } from "./domain/time";
 import type {
   Assignment,
@@ -170,6 +185,72 @@ function formatSuggestion(suggestion: SuggestionAction): string {
   }
 }
 
+function PresentationGridCell({
+  slotId,
+  resourceId,
+  teamId,
+  isConflictCell,
+  isEnabled,
+}: {
+  slotId: string;
+  resourceId: number;
+  teamId: number | null;
+  isConflictCell: boolean;
+  isEnabled: boolean;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDraggableRef,
+    isDragging,
+  } = useDraggable({
+    id: `presentation-drag-${slotId}-${resourceId}`,
+    data:
+      teamId === null
+        ? undefined
+        : ({
+            type: "presentation",
+            slotId,
+            resourceId,
+            teamId,
+          } satisfies PresentationDragData),
+    disabled: !isEnabled || teamId === null,
+  });
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: `presentation-drop-${slotId}-${resourceId}`,
+    data: {
+      type: "presentation",
+      slotId,
+      resourceId,
+    } satisfies PresentationDropData,
+    disabled: !isEnabled,
+  });
+
+  const setNodeRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      setDraggableRef(node);
+      setDroppableRef(node);
+    },
+    [setDraggableRef, setDroppableRef]
+  );
+
+  return (
+    <div
+      ref={setNodeRef}
+      data-testid={`presentation-cell-${slotId}-${resourceId}`}
+      className={`grid-cell ${teamId === null ? "empty" : "filled"} ${
+        isConflictCell ? "conflict" : ""
+      } ${isEnabled && teamId !== null ? "draggable" : ""} ${
+        isDragging ? "dragging" : ""
+      } ${isOver && isEnabled ? "droppable-over" : ""}`}
+      {...(isEnabled && teamId !== null ? attributes : {})}
+      {...(isEnabled && teamId !== null ? listeners : {})}
+    >
+      {teamId === null ? EMPTY_CELL_LABEL : String(teamId)}
+    </div>
+  );
+}
+
 function App() {
   const [setup, setSetup] = useState<TournamentSetup>(DEFAULT_SETUP);
   const [scheduleResult, setScheduleResult] =
@@ -179,6 +260,7 @@ function App() {
   const [scheduleConflicts, setScheduleConflicts] = useState<
     ScheduleConflict[] | null
   >(null);
+  const [scheduleDirty, setScheduleDirty] = useState(false);
 
   const validation = useMemo(() => validateSetup(setup), [setup]);
   const errorMap = useMemo(() => {
@@ -252,6 +334,7 @@ function App() {
     const result = generateSchedule(setup);
     setScheduleResult(result);
     setScheduleConflicts(null);
+    setScheduleDirty(false);
   };
 
   const handleValidateSchedule = () => {
@@ -262,6 +345,7 @@ function App() {
       scheduleResult.schedule.assignments
     );
     setScheduleConflicts(conflicts);
+    setScheduleDirty(false);
   };
 
   useEffect(() => {
@@ -371,6 +455,47 @@ function App() {
     }
     return keys;
   }, [scheduleConflicts, scheduleResult]);
+
+  const sensors = useSensors(useSensor(PointerSensor));
+
+  const handlePresentationDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      if (!scheduleResult || !scheduleResult.ok || editMode !== "manual") return;
+      const activeData = event.active.data.current as
+        | PresentationDragData
+        | undefined;
+      const overData = event.over?.data.current as
+        | PresentationDropData
+        | undefined;
+      if (!activeData || !overData) return;
+      if (
+        activeData.slotId === overData.slotId &&
+        activeData.resourceId === overData.resourceId
+      ) {
+        return;
+      }
+
+      setScheduleResult((prev) => {
+        if (!prev || !prev.ok) return prev;
+        const nextAssignments = applyPresentationMove(
+          prev.schedule.assignments,
+          activeData,
+          overData
+        );
+
+        return {
+          ...prev,
+          schedule: {
+            ...prev.schedule,
+            assignments: nextAssignments,
+          },
+        };
+      });
+      setScheduleConflicts(null);
+      setScheduleDirty(true);
+    },
+    [editMode, scheduleResult]
+  );
 
   return (
     <div className="app">
@@ -749,6 +874,12 @@ function App() {
                             } detected.`}
                       </span>
                     )}
+                    {scheduleResult &&
+                      scheduleResult.ok &&
+                      scheduleConflicts === null &&
+                      scheduleDirty && (
+                        <span className="hint">Manual changes pending validation.</span>
+                      )}
                   </div>
                 </div>
                 <div className="tab-bar" role="tablist" aria-label="Schedule views">
@@ -920,60 +1051,66 @@ function App() {
                     scheduleGridRows.presentation.length === 0 ? (
                       <p className="hint">No presentation slots available.</p>
                     ) : (
-                      <div
-                        className="schedule-grid"
-                        role="region"
-                        aria-label="Presentation grid"
+                      <DndContext
+                        sensors={sensors}
+                        onDragEnd={handlePresentationDragEnd}
+                        collisionDetection={pointerWithin}
                       >
-                        {scheduleGridRows?.presentation.map((row) => (
-                          <div className="grid-row" key={row.slotId}>
-                            <div className="grid-row-label">{row.timeLabel}</div>
-                            <div
-                              className="grid-row-head"
-                              style={{
-                                gridTemplateColumns: `repeat(${row.cells.length}, minmax(80px, 1fr))`,
-                              }}
-                            >
-                              {row.cells.map((cell) => (
-                                <div
-                                  key={`${row.slotId}-header-${cell.resourceId}`}
-                                  className="grid-header-cell"
-                                >
-                                  Room {cell.resourceId}
-                                </div>
-                              ))}
-                            </div>
-                            <div
-                              className="grid-row-cells"
-                              style={{
-                                gridTemplateColumns: `repeat(${row.cells.length}, minmax(80px, 1fr))`,
-                              }}
-                            >
-                              {row.cells.map((cell) => {
-                                const cellKey = `${row.slotId}::${normalizeResourceId(
-                                  cell.resourceId
-                                )}`;
-                                const isConflictCell =
-                                  (cell.teamId !== null &&
-                                    conflictTeamIds.has(cell.teamId)) ||
-                                  conflictCellKeys.has(cellKey);
-                                return (
+                        <div
+                          className="schedule-grid"
+                          role="region"
+                          aria-label="Presentation grid"
+                        >
+                          {scheduleGridRows?.presentation.map((row) => (
+                            <div className="grid-row" key={row.slotId}>
+                              <div className="grid-row-label">
+                                {row.timeLabel}
+                              </div>
+                              <div
+                                className="grid-row-head"
+                                style={{
+                                  gridTemplateColumns: `repeat(${row.cells.length}, minmax(80px, 1fr))`,
+                                }}
+                              >
+                                {row.cells.map((cell) => (
                                   <div
-                                    key={`${row.slotId}-cell-${cell.resourceId}`}
-                                    className={`grid-cell ${
-                                      cell.teamId === null ? "empty" : "filled"
-                                    } ${isConflictCell ? "conflict" : ""}`}
+                                    key={`${row.slotId}-header-${cell.resourceId}`}
+                                    className="grid-header-cell"
                                   >
-                                    {cell.teamId === null
-                                      ? EMPTY_CELL_LABEL
-                                      : String(cell.teamId)}
+                                    Room {cell.resourceId}
                                   </div>
-                                );
-                              })}
+                                ))}
+                              </div>
+                              <div
+                                className="grid-row-cells"
+                                style={{
+                                  gridTemplateColumns: `repeat(${row.cells.length}, minmax(80px, 1fr))`,
+                                }}
+                              >
+                                {row.cells.map((cell) => {
+                                  const cellKey = `${row.slotId}::${normalizeResourceId(
+                                    cell.resourceId
+                                  )}`;
+                                  const isConflictCell =
+                                    (cell.teamId !== null &&
+                                      conflictTeamIds.has(cell.teamId)) ||
+                                    conflictCellKeys.has(cellKey);
+                                  return (
+                                    <PresentationGridCell
+                                      key={`${row.slotId}-cell-${cell.resourceId}`}
+                                      slotId={row.slotId}
+                                      resourceId={cell.resourceId}
+                                      teamId={cell.teamId}
+                                      isConflictCell={isConflictCell}
+                                      isEnabled={editMode === "manual"}
+                                    />
+                                  );
+                                })}
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      </DndContext>
                     )}
                   </>
                 )}

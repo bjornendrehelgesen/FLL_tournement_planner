@@ -401,4 +401,5 @@ describe("App", () => {
     expect(within(presentationGrid).getByText("4")).toBeInTheDocument();
     expect(within(presentationGrid).getAllByText("Empty")).toHaveLength(2);
   });
+
 });
