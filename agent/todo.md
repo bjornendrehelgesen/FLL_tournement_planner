@@ -315,14 +315,14 @@ Toggles:
   - [x] add “apply suggestion” buttons (may be stub at first)
 
 ### 9.2 Team-centric table (primary)
-- [ ] Rows: teams 1..N
+- [x] Rows: teams 1..N
 - [ ] Columns:
-  - [ ] Presentation time + room
-  - [ ] Robot match 1 time + table
-  - [ ] Robot match 2 time + table
-  - [ ] Robot match 3 time + table
-- [ ] Sorting stable by teamId
-- [ ] Nice time formatting
+  - [x] Presentation time + room
+  - [x] Robot match 1 time + table
+  - [x] Robot match 2 time + table
+  - [x] Robot match 3 time + table
+- [x] Sorting stable by teamId
+- [x] Nice time formatting
 
 ### 9.3 Track grids (secondary)
 - [ ] Tabs: Teams / Robot track / Presentation track
@@ -337,7 +337,7 @@ Toggles:
 
 ### 9.4 Tests
 - [x] Render test for result state (success/failure)
-- [ ] Render test for team table from fixture schedule
+- [x] Render test for team table from fixture schedule
 - [ ] Render test for robot/presentation grids from fixture schedule
 
 ---
