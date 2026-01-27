@@ -10,7 +10,14 @@ import {
   type DragEndEvent,
   pointerWithin,
 } from "@dnd-kit/core";
-import { generateSchedule, validateSchedule, validateSetup } from "./engine";
+import {
+  autoReshuffle,
+  generateSchedule,
+  validateSchedule,
+  validateSetup,
+  type AutoReshuffleFailureReason,
+  type PresentationMove,
+} from "./engine";
 import {
   applyPresentationMove,
   type PresentationDragData,
@@ -332,6 +339,8 @@ function App() {
     ScheduleConflict[] | null
   >(null);
   const [scheduleDirty, setScheduleDirty] = useState(false);
+  const [autoReshuffleError, setAutoReshuffleError] =
+    useState<AutoReshuffleFailureReason | null>(null);
 
   const validation = useMemo(() => validateSetup(setup), [setup]);
   const errorMap = useMemo(() => {
@@ -406,6 +415,7 @@ function App() {
     setScheduleResult(result);
     setScheduleConflicts(null);
     setScheduleDirty(false);
+    setAutoReshuffleError(null);
   };
 
   const handleValidateSchedule = () => {
@@ -417,6 +427,7 @@ function App() {
     );
     setScheduleConflicts(conflicts);
     setScheduleDirty(false);
+    setAutoReshuffleError(null);
   };
 
   useEffect(() => {
@@ -531,7 +542,7 @@ function App() {
 
   const handlePresentationDragEnd = useCallback(
     (event: DragEndEvent) => {
-      if (!scheduleResult || !scheduleResult.ok || editMode !== "manual") return;
+      if (!scheduleResult || !scheduleResult.ok) return;
       const activeData = event.active.data.current as
         | PresentationDragData
         | undefined;
@@ -545,27 +556,52 @@ function App() {
       ) {
         return;
       }
+      if (editMode === "manual") {
+        setScheduleResult((prev) => {
+          if (!prev || !prev.ok) return prev;
+          const nextAssignments = applyPresentationMove(
+            prev.schedule.assignments,
+            activeData,
+            overData
+          );
+
+          return {
+            ...prev,
+            schedule: {
+              ...prev.schedule,
+              assignments: nextAssignments,
+            },
+          };
+        });
+        setScheduleConflicts(null);
+        setScheduleDirty(true);
+        setAutoReshuffleError(null);
+        return;
+      }
+
+      const move: PresentationMove = {
+        type: "presentation",
+        active: activeData,
+        over: overData,
+      };
+      const result = autoReshuffle(scheduleResult.schedule, setup, move);
+      if (!result.ok) {
+        setAutoReshuffleError(result.reason);
+        return;
+      }
 
       setScheduleResult((prev) => {
         if (!prev || !prev.ok) return prev;
-        const nextAssignments = applyPresentationMove(
-          prev.schedule.assignments,
-          activeData,
-          overData
-        );
-
         return {
           ...prev,
-          schedule: {
-            ...prev.schedule,
-            assignments: nextAssignments,
-          },
+          schedule: result.schedule,
         };
       });
       setScheduleConflicts(null);
-      setScheduleDirty(true);
+      setScheduleDirty(false);
+      setAutoReshuffleError(null);
     },
-    [editMode, scheduleResult]
+    [editMode, scheduleResult, setup]
   );
 
   const handleRobotDragEnd = useCallback(
@@ -960,17 +996,25 @@ function App() {
                           editMode === "manual" ? "active" : ""
                         }`}
                         aria-pressed={editMode === "manual"}
-                        onClick={() => setEditMode("manual")}
+                        onClick={() => {
+                          setEditMode("manual");
+                          setAutoReshuffleError(null);
+                        }}
                       >
                         Manual
                       </button>
                       <button
                         type="button"
-                        className="mode-button"
-                        disabled
-                        aria-disabled="true"
+                        className={`mode-button ${
+                          editMode === "auto" ? "active" : ""
+                        }`}
+                        aria-pressed={editMode === "auto"}
+                        onClick={() => {
+                          setEditMode("auto");
+                          setAutoReshuffleError(null);
+                        }}
                       >
-                        Auto-reshuffle (disabled)
+                        Auto-reshuffle
                       </button>
                     </div>
                   </div>
@@ -997,6 +1041,12 @@ function App() {
                       scheduleDirty && (
                         <span className="hint">Manual changes pending validation.</span>
                       )}
+                    {autoReshuffleError && (
+                      <span className="hint">
+                        Auto-reshuffle failed ({autoReshuffleError.code}):{" "}
+                        {autoReshuffleError.message}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="tab-bar" role="tablist" aria-label="Schedule views">
@@ -1229,7 +1279,7 @@ function App() {
                                       resourceId={cell.resourceId}
                                       teamId={cell.teamId}
                                       isConflictCell={isConflictCell}
-                                      isEnabled={editMode === "manual"}
+                                      isEnabled={editMode === "manual" || editMode === "auto"}
                                     />
                                   );
                                 })}
