@@ -16,6 +16,11 @@ import {
   type PresentationDragData,
   type PresentationDropData,
 } from "./presentationDnd";
+import {
+  applyRobotMove,
+  type RobotDragData,
+  type RobotDropData,
+} from "./robotDnd";
 import { formatLocalDateTime, parseLocalDateTime } from "./domain/time";
 import type {
   Assignment,
@@ -238,6 +243,72 @@ function PresentationGridCell({
     <div
       ref={setNodeRef}
       data-testid={`presentation-cell-${slotId}-${resourceId}`}
+      className={`grid-cell ${teamId === null ? "empty" : "filled"} ${
+        isConflictCell ? "conflict" : ""
+      } ${isEnabled && teamId !== null ? "draggable" : ""} ${
+        isDragging ? "dragging" : ""
+      } ${isOver && isEnabled ? "droppable-over" : ""}`}
+      {...(isEnabled && teamId !== null ? attributes : {})}
+      {...(isEnabled && teamId !== null ? listeners : {})}
+    >
+      {teamId === null ? EMPTY_CELL_LABEL : String(teamId)}
+    </div>
+  );
+}
+
+function RobotGridCell({
+  slotId,
+  resourceId,
+  teamId,
+  isConflictCell,
+  isEnabled,
+}: {
+  slotId: string;
+  resourceId: number;
+  teamId: number | null;
+  isConflictCell: boolean;
+  isEnabled: boolean;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDraggableRef,
+    isDragging,
+  } = useDraggable({
+    id: `robot-drag-${slotId}-${resourceId}`,
+    data:
+      teamId === null
+        ? undefined
+        : ({
+            type: "robot",
+            slotId,
+            tableId: resourceId,
+            teamId,
+          } satisfies RobotDragData),
+    disabled: !isEnabled || teamId === null,
+  });
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: `robot-drop-${slotId}-${resourceId}`,
+    data: {
+      type: "robot",
+      slotId,
+      tableId: resourceId,
+    } satisfies RobotDropData,
+    disabled: !isEnabled,
+  });
+
+  const setNodeRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      setDraggableRef(node);
+      setDroppableRef(node);
+    },
+    [setDraggableRef, setDroppableRef]
+  );
+
+  return (
+    <div
+      ref={setNodeRef}
+      data-testid={`robot-cell-${slotId}-${resourceId}`}
       className={`grid-cell ${teamId === null ? "empty" : "filled"} ${
         isConflictCell ? "conflict" : ""
       } ${isEnabled && teamId !== null ? "draggable" : ""} ${
@@ -481,6 +552,52 @@ function App() {
           prev.schedule.assignments,
           activeData,
           overData
+        );
+
+        return {
+          ...prev,
+          schedule: {
+            ...prev.schedule,
+            assignments: nextAssignments,
+          },
+        };
+      });
+      setScheduleConflicts(null);
+      setScheduleDirty(true);
+    },
+    [editMode, scheduleResult]
+  );
+
+  const handleRobotDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      if (!scheduleResult || !scheduleResult.ok || editMode !== "manual") return;
+      const activeData = event.active.data.current as
+        | RobotDragData
+        | undefined;
+      const overData = event.over?.data.current as RobotDropData | undefined;
+      if (!activeData || !overData) return;
+      if (
+        activeData.slotId === overData.slotId &&
+        activeData.tableId === overData.tableId
+      ) {
+        return;
+      }
+      const slot = scheduleResult.schedule.slots.find(
+        (candidate) =>
+          candidate.id === overData.slotId && candidate.track === Track.ROBOT
+      );
+      const tableIds = slot?.resources.tableIds ?? [];
+      if (!slot || !tableIds.includes(overData.tableId)) {
+        return;
+      }
+
+      setScheduleResult((prev) => {
+        if (!prev || !prev.ok) return prev;
+        const nextAssignments = applyRobotMove(
+          prev.schedule.assignments,
+          activeData,
+          overData,
+          prev.schedule.slots
         );
 
         return {
@@ -990,56 +1107,66 @@ function App() {
                     {scheduleGridRows && scheduleGridRows.robot.length === 0 ? (
                       <p className="hint">No robot slots available.</p>
                     ) : (
-                      <div className="schedule-grid" role="region" aria-label="Robot grid">
-                        {scheduleGridRows?.robot.map((row) => (
-                          <div className="grid-row" key={row.slotId}>
-                            <div className="grid-row-label">{row.timeLabel}</div>
-                            <div
-                              className="grid-row-head"
-                              style={{
-                                gridTemplateColumns: `repeat(${row.cells.length}, minmax(80px, 1fr))`,
-                              }}
-                            >
-                              {row.cells.map((cell) => (
-                                <div
-                                  key={`${row.slotId}-header-${cell.resourceId}`}
-                                  className="grid-header-cell"
-                                >
-                                  Table {cell.resourceId}
-                                </div>
-                              ))}
-                            </div>
-                            <div
-                              className="grid-row-cells"
-                              style={{
-                                gridTemplateColumns: `repeat(${row.cells.length}, minmax(80px, 1fr))`,
-                              }}
-                            >
-                              {row.cells.map((cell) => {
-                                const cellKey = `${row.slotId}::${normalizeResourceId(
-                                  cell.resourceId
-                                )}`;
-                                const isConflictCell =
-                                  (cell.teamId !== null &&
-                                    conflictTeamIds.has(cell.teamId)) ||
-                                  conflictCellKeys.has(cellKey);
-                                return (
+                      <DndContext
+                        sensors={sensors}
+                        onDragEnd={handleRobotDragEnd}
+                        collisionDetection={pointerWithin}
+                      >
+                        <div
+                          className="schedule-grid"
+                          role="region"
+                          aria-label="Robot grid"
+                        >
+                          {scheduleGridRows?.robot.map((row) => (
+                            <div className="grid-row" key={row.slotId}>
+                              <div className="grid-row-label">
+                                {row.timeLabel}
+                              </div>
+                              <div
+                                className="grid-row-head"
+                                style={{
+                                  gridTemplateColumns: `repeat(${row.cells.length}, minmax(80px, 1fr))`,
+                                }}
+                              >
+                                {row.cells.map((cell) => (
                                   <div
-                                    key={`${row.slotId}-cell-${cell.resourceId}`}
-                                    className={`grid-cell ${
-                                      cell.teamId === null ? "empty" : "filled"
-                                    } ${isConflictCell ? "conflict" : ""}`}
+                                    key={`${row.slotId}-header-${cell.resourceId}`}
+                                    className="grid-header-cell"
                                   >
-                                    {cell.teamId === null
-                                      ? EMPTY_CELL_LABEL
-                                      : String(cell.teamId)}
+                                    Table {cell.resourceId}
                                   </div>
-                                );
-                              })}
+                                ))}
+                              </div>
+                              <div
+                                className="grid-row-cells"
+                                style={{
+                                  gridTemplateColumns: `repeat(${row.cells.length}, minmax(80px, 1fr))`,
+                                }}
+                              >
+                                {row.cells.map((cell) => {
+                                  const cellKey = `${row.slotId}::${normalizeResourceId(
+                                    cell.resourceId
+                                  )}`;
+                                  const isConflictCell =
+                                    (cell.teamId !== null &&
+                                      conflictTeamIds.has(cell.teamId)) ||
+                                    conflictCellKeys.has(cellKey);
+                                  return (
+                                    <RobotGridCell
+                                      key={`${row.slotId}-cell-${cell.resourceId}`}
+                                      slotId={row.slotId}
+                                      resourceId={cell.resourceId}
+                                      teamId={cell.teamId}
+                                      isConflictCell={isConflictCell}
+                                      isEnabled={editMode === "manual"}
+                                    />
+                                  );
+                                })}
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      </DndContext>
                     )}
                   </>
                 )}
