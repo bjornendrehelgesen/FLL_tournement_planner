@@ -416,21 +416,21 @@ Toggles:
 ### 13.1 Repository
 - [ ] Implement local storage repository:
   - [ ] `listSetups()`
-  - [ ] `saveSetup(setup)`
-  - [ ] `loadSetup(id)`
-  - [ ] `deleteSetup(id)`
-  - [ ] `setLastOpened(id)`
-  - [ ] `getLastOpened()`
+  - [x] `saveSetup(setup)`
+  - [x] `loadSetup(id)`
+  - [x] `deleteSetup(id)`
+  - [x] `setLastOpened(id)`
+  - [x] `getLastOpened()`
 
 ### 13.2 UI wiring
-- [ ] Save setup (optional name)
-- [ ] Load setup (list/dropdown)
-- [ ] Delete setup
-- [ ] On app start, load last-opened automatically (if any)
+- [x] Save setup (optional name)
+- [x] Load setup (list/dropdown)
+- [x] Delete setup
+- [x] On app start, load last-opened automatically (if any)
 
 ### 13.3 Tests
-- [ ] repository unit tests with mocked localStorage
-- [ ] UI test: save → reload page → setup restored
+- [x] repository unit tests with mocked localStorage
+- [x] UI test: save → reload page → setup restored
 
 ---
 
@@ -488,6 +488,6 @@ Toggles:
   - [ ] track grids work
   - [x] manual mode + validate conflicts
   - [x] auto-reshuffle mode keeps schedule valid or reverts with reason
-  - [ ] setups saved/loaded locally
+  - [x] setups saved/loaded locally
 
 ---

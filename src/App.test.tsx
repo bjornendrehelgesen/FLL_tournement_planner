@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
@@ -29,6 +29,7 @@ const mockedGenerateSchedule = vi.mocked(generateSchedule);
 describe("App", () => {
   afterEach(() => {
     mockedGenerateSchedule.mockReset();
+    localStorage.clear();
   });
 
   it("renders the header", () => {
@@ -240,6 +241,27 @@ describe("App", () => {
     expect(
       screen.getByText(/increase robot tables by 1/i)
     ).toBeInTheDocument();
+  });
+
+  it("persists setup changes after saving and reloading", async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+
+    const { unmount } = render(<App />);
+    const teamsInput = screen.getByLabelText(/number of teams/i);
+    await user.clear(teamsInput);
+    await user.type(teamsInput, "8");
+    await user.click(screen.getByRole("button", { name: /save setup/i }));
+
+    unmount();
+
+    render(<App />);
+    await waitFor(() => {
+      const loadedTeamsInput = screen.getByLabelText(
+        /number of teams/i
+      ) as HTMLInputElement;
+      expect(loadedTeamsInput.value).toBe("8");
+    });
   });
 
   it("shows a conflict list after validation", async () => {

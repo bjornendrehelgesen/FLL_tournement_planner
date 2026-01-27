@@ -39,6 +39,10 @@ import type {
   TournamentSetup,
 } from "./domain";
 import { AssignmentType, Track } from "./domain";
+import {
+  createLocalStorageSetupRepository,
+  type SetupSummary,
+} from "./storage/setupRepository";
 
 const DEFAULT_DATE = new Date(2026, 0, 15, 9, 0, 0, 0);
 const DEFAULT_SETUP: TournamentSetup = {
@@ -341,6 +345,14 @@ function App() {
   const [scheduleDirty, setScheduleDirty] = useState(false);
   const [autoReshuffleError, setAutoReshuffleError] =
     useState<AutoReshuffleFailureReason | null>(null);
+  const [savedSetups, setSavedSetups] = useState<SetupSummary[]>([]);
+  const [setupName, setSetupName] = useState("");
+  const [selectedSetupId, setSelectedSetupId] = useState("");
+
+  const setupRepository = useMemo(
+    () => createLocalStorageSetupRepository(),
+    []
+  );
 
   const validation = useMemo(() => validateSetup(setup), [setup]);
   const errorMap = useMemo(() => {
@@ -428,6 +440,53 @@ function App() {
     setScheduleConflicts(conflicts);
     setScheduleDirty(false);
     setAutoReshuffleError(null);
+  };
+
+  const resetScheduleState = useCallback(() => {
+    setScheduleResult(null);
+    setScheduleConflicts(null);
+    setScheduleDirty(false);
+    setAutoReshuffleError(null);
+  }, []);
+
+  useEffect(() => {
+    const setups = setupRepository.list();
+    setSavedSetups(setups);
+
+    const lastOpened = setupRepository.getLastOpened();
+    if (lastOpened) {
+      const storedSetup = setupRepository.load(lastOpened);
+      if (storedSetup) {
+        setSetup(storedSetup);
+        setSelectedSetupId(lastOpened);
+        resetScheduleState();
+      }
+    }
+  }, [resetScheduleState, setupRepository]);
+
+  const handleSaveSetup = () => {
+    const id = setupRepository.save(setup, setupName);
+    setupRepository.setLastOpened(id);
+    setSavedSetups(setupRepository.list());
+    setSelectedSetupId(id);
+    setSetupName("");
+  };
+
+  const handleLoadSetup = () => {
+    if (!selectedSetupId) return;
+    const storedSetup = setupRepository.load(selectedSetupId);
+    if (!storedSetup) return;
+    setSetup(storedSetup);
+    setupRepository.setLastOpened(selectedSetupId);
+    resetScheduleState();
+  };
+
+  const handleDeleteSetup = () => {
+    if (!selectedSetupId) return;
+    setupRepository.remove(selectedSetupId);
+    const nextSetups = setupRepository.list();
+    setSavedSetups(nextSetups);
+    setSelectedSetupId("");
   };
 
   useEffect(() => {
@@ -700,6 +759,60 @@ function App() {
               }}
             />
             <FieldErrors errors={getErrors("teams")} />
+          </div>
+        </section>
+
+        <section className="card">
+          <h2>Settings</h2>
+          <div className="field-grid setup-storage">
+            <div className="field">
+              <label htmlFor="setup-name">Setup name (optional)</label>
+              <input
+                id="setup-name"
+                type="text"
+                placeholder="Add a label for this setup"
+                value={setupName}
+                onChange={(event) => setSetupName(event.target.value)}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="setup-load">Load setup</label>
+              <select
+                id="setup-load"
+                value={selectedSetupId}
+                onChange={(event) => setSelectedSetupId(event.target.value)}
+                disabled={savedSetups.length === 0}
+              >
+                <option value="">Select saved setup</option>
+                {savedSetups.map((saved) => (
+                  <option key={saved.id} value={saved.id}>
+                    {saved.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="setup-actions">
+            <button type="button" onClick={handleSaveSetup}>
+              Save setup
+            </button>
+            <button
+              type="button"
+              className="ghost"
+              onClick={handleLoadSetup}
+              disabled={!selectedSetupId}
+            >
+              Load setup
+            </button>
+            <button
+              type="button"
+              className="ghost"
+              onClick={handleDeleteSetup}
+              disabled={!selectedSetupId}
+            >
+              Delete setup
+            </button>
+            <p className="hint">Saved setups stay in this browser only.</p>
           </div>
         </section>
 
