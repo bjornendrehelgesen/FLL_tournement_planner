@@ -606,7 +606,7 @@ function App() {
 
   const handleRobotDragEnd = useCallback(
     (event: DragEndEvent) => {
-      if (!scheduleResult || !scheduleResult.ok || editMode !== "manual") return;
+      if (!scheduleResult || !scheduleResult.ok) return;
       const activeData = event.active.data.current as
         | RobotDragData
         | undefined;
@@ -618,36 +618,62 @@ function App() {
       ) {
         return;
       }
-      const slot = scheduleResult.schedule.slots.find(
-        (candidate) =>
-          candidate.id === overData.slotId && candidate.track === Track.ROBOT
-      );
-      const tableIds = slot?.resources.tableIds ?? [];
-      if (!slot || !tableIds.includes(overData.tableId)) {
+      if (editMode === "manual") {
+        const slot = scheduleResult.schedule.slots.find(
+          (candidate) =>
+            candidate.id === overData.slotId && candidate.track === Track.ROBOT
+        );
+        const tableIds = slot?.resources.tableIds ?? [];
+        if (!slot || !tableIds.includes(overData.tableId)) {
+          return;
+        }
+
+        setScheduleResult((prev) => {
+          if (!prev || !prev.ok) return prev;
+          const nextAssignments = applyRobotMove(
+            prev.schedule.assignments,
+            activeData,
+            overData,
+            prev.schedule.slots
+          );
+
+          return {
+            ...prev,
+            schedule: {
+              ...prev.schedule,
+              assignments: nextAssignments,
+            },
+          };
+        });
+        setScheduleConflicts(null);
+        setScheduleDirty(true);
+        setAutoReshuffleError(null);
+        return;
+      }
+
+      const move = {
+        type: "robot",
+        active: activeData,
+        over: overData,
+      } as const;
+      const result = autoReshuffle(scheduleResult.schedule, setup, move);
+      if (!result.ok) {
+        setAutoReshuffleError(result.reason);
         return;
       }
 
       setScheduleResult((prev) => {
         if (!prev || !prev.ok) return prev;
-        const nextAssignments = applyRobotMove(
-          prev.schedule.assignments,
-          activeData,
-          overData,
-          prev.schedule.slots
-        );
-
         return {
           ...prev,
-          schedule: {
-            ...prev.schedule,
-            assignments: nextAssignments,
-          },
+          schedule: result.schedule,
         };
       });
       setScheduleConflicts(null);
-      setScheduleDirty(true);
+      setScheduleDirty(false);
+      setAutoReshuffleError(null);
     },
-    [editMode, scheduleResult]
+    [editMode, scheduleResult, setup]
   );
 
   return (
@@ -1208,7 +1234,7 @@ function App() {
                                       resourceId={cell.resourceId}
                                       teamId={cell.teamId}
                                       isConflictCell={isConflictCell}
-                                      isEnabled={editMode === "manual"}
+                                      isEnabled={editMode === "manual" || editMode === "auto"}
                                     />
                                   );
                                 })}

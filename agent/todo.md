@@ -392,22 +392,22 @@ Toggles:
 ## 12) Drag & Drop — Auto-Reshuffle Mode
 
 ### 12.1 Auto-reshuffle for presentations
-- [ ] Implement `autoReshuffle(schedule, setup, move)` in engine:
-  - [ ] apply move on copy
-  - [ ] bounded repair to restore validity
-  - [ ] if success commit
-  - [ ] if fail revert + show reason
+- [x] Implement `autoReshuffle(schedule, setup, move)` in engine:
+  - [x] apply move on copy
+  - [x] bounded repair to restore validity
+  - [x] if success commit
+  - [x] if fail revert + show reason
 - [ ] Tests:
-  - [ ] successful repair case
-  - [ ] failure case reverts and emits reason
+  - [x] successful repair case
+  - [x] failure case reverts and emits reason
 
 ### 12.2 Auto-reshuffle for robots
-- [ ] Extend autoReshuffle to robot moves
-- [ ] Prefer robot-only repairs first (document behavior)
+- [x] Extend autoReshuffle to robot moves
+- [x] Prefer robot-only repairs first (document behavior)
 - [ ] Tests:
-  - [ ] success
-  - [ ] failure/revert
-  - [ ] post-condition: validateSchedule has zero conflicts
+  - [x] success
+  - [x] failure/revert
+  - [x] post-condition: validateSchedule has zero conflicts
 
 ---
 
@@ -487,7 +487,7 @@ Toggles:
   - [ ] team-centric table view works
   - [ ] track grids work
   - [x] manual mode + validate conflicts
-  - [ ] auto-reshuffle mode keeps schedule valid or reverts with reason
+  - [x] auto-reshuffle mode keeps schedule valid or reverts with reason
   - [ ] setups saved/loaded locally
 
 ---
