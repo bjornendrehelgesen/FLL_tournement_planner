@@ -1,4 +1,5 @@
 import type { GenerateScheduleResult, TournamentSetup } from "../domain";
+import { assignRobotMatches } from "./assign/robots";
 import { assignPresentations } from "./assign/presentations";
 import { capacityCheck } from "./feasibility/capacityCheck";
 import { presentationSlots } from "./slots/presentationSlots";
@@ -36,10 +37,15 @@ export function generateSchedule(setup: TournamentSetup): GenerateScheduleResult
   const slots = [...robotSlotsList, ...presentationSlotsList].sort(
     (a, b) => a.startMs - b.startMs || a.id.localeCompare(b.id),
   );
-  const assignments = assignPresentations({
+  const presentationAssignments = assignPresentations({
     teams: setup.teams,
     slots: presentationSlotsList,
   });
+  const robotAssignments = assignRobotMatches({
+    teams: setup.teams,
+    slots: robotSlotsList,
+  });
+  const assignments = [...presentationAssignments, ...robotAssignments];
 
   return {
     ok: true,

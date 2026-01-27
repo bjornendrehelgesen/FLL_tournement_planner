@@ -65,8 +65,14 @@ const conflictAssignments: Assignment[] = [
   },
 ];
 
+type DraftCounts = {
+  presentations: number;
+  robots: number;
+  total: number;
+};
+
 function App() {
-  const [draftCount, setDraftCount] = useState<number | null>(null);
+  const [draftCounts, setDraftCounts] = useState<DraftCounts | null>(null);
   const validationResult = validateSetup(setup);
   const engineStatus = validationResult.ok
     ? "Setup OK"
@@ -97,14 +103,22 @@ function App() {
   const handleGenerateDraft = () => {
     const result = generateSchedule(setup);
     if (!result.ok) {
-      setDraftCount(0);
+      setDraftCounts(null);
       return;
     }
 
-    const presentationAssignments = result.schedule.assignments.filter(
+    const presentationCount = result.schedule.assignments.filter(
       (assignment) => assignment.type === AssignmentType.PRESENTATION,
-    );
-    setDraftCount(presentationAssignments.length);
+    ).length;
+    const robotCount = result.schedule.assignments.filter(
+      (assignment) => assignment.type === AssignmentType.ROBOT_MATCH,
+    ).length;
+
+    setDraftCounts({
+      presentations: presentationCount,
+      robots: robotCount,
+      total: presentationCount + robotCount,
+    });
   };
 
   return (
@@ -133,8 +147,16 @@ function App() {
           Generate Draft
         </button>
         <p>
-          Presentation assignments:{" "}
-          {draftCount === null ? "Not generated" : draftCount}
+          Presentations:{" "}
+          {draftCounts === null ? "Not generated" : draftCounts.presentations}
+        </p>
+        <p>
+          Robot matches:{" "}
+          {draftCounts === null ? "Not generated" : draftCounts.robots}
+        </p>
+        <p>
+          Total assignments:{" "}
+          {draftCounts === null ? "Not generated" : draftCounts.total}
         </p>
       </section>
     </div>
