@@ -306,13 +306,13 @@ Toggles:
 ## 9) UI: Schedule Rendering
 
 ### 9.1 Result state (success/failure)
-- [ ] On success:
-  - [ ] show “Valid schedule generated”
-  - [ ] show counts and warnings (if any)
-- [ ] On failure:
-  - [ ] show error list (code + human message)
-  - [ ] show suggestions list (text)
-  - [ ] add “apply suggestion” buttons (may be stub at first)
+- [x] On success:
+  - [x] show “Valid schedule generated”
+  - [x] show counts and warnings (if any)
+- [x] On failure:
+  - [x] show error list (code + human message)
+  - [x] show suggestions list (text)
+  - [x] add “apply suggestion” buttons (may be stub at first)
 
 ### 9.2 Team-centric table (primary)
 - [ ] Rows: teams 1..N
@@ -336,6 +336,7 @@ Toggles:
   - [ ] cells show team or empty
 
 ### 9.4 Tests
+- [x] Render test for result state (success/failure)
 - [ ] Render test for team table from fixture schedule
 - [ ] Render test for robot/presentation grids from fixture schedule
 
