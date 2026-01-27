@@ -71,8 +71,16 @@ type DraftCounts = {
   total: number;
 };
 
+type ScheduleStatus =
+  | { status: "idle" }
+  | { status: "ok" }
+  | { status: "error"; errors: string[]; suggestions: string[] };
+
 function App() {
   const [draftCounts, setDraftCounts] = useState<DraftCounts | null>(null);
+  const [scheduleStatus, setScheduleStatus] = useState<ScheduleStatus>({
+    status: "idle",
+  });
   const validationResult = validateSetup(setup);
   const engineStatus = validationResult.ok
     ? "Setup OK"
@@ -104,6 +112,11 @@ function App() {
     const result = generateSchedule(setup);
     if (!result.ok) {
       setDraftCounts(null);
+      setScheduleStatus({
+        status: "error",
+        errors: result.errors.map((error) => error.code),
+        suggestions: result.suggestions.map((suggestion) => suggestion.action),
+      });
       return;
     }
 
@@ -119,6 +132,21 @@ function App() {
       robots: robotCount,
       total: presentationCount + robotCount,
     });
+
+    const scheduleConflicts = validateSchedule(
+      setup,
+      result.schedule.slots,
+      result.schedule.assignments,
+    );
+    setScheduleStatus(
+      scheduleConflicts.length === 0
+        ? { status: "ok" }
+        : {
+            status: "error",
+            errors: scheduleConflicts.map((conflict) => conflict.type),
+            suggestions: [],
+          },
+    );
   };
 
   return (
@@ -144,8 +172,29 @@ function App() {
         <p>Robot capacity: {robotCapacity} (sum of active tables)</p>
         <p>Conflicts: {conflicts.length}</p>
         <button type="button" onClick={handleGenerateDraft}>
-          Generate Draft
+          Generate schedule
         </button>
+        {scheduleStatus.status === "ok" && <p>Schedule valid</p>}
+        {scheduleStatus.status === "error" && (
+          <>
+            <p>Schedule errors:</p>
+            <ul>
+              {scheduleStatus.errors.map((code) => (
+                <li key={code}>{code}</li>
+              ))}
+            </ul>
+            {scheduleStatus.suggestions.length > 0 && (
+              <>
+                <p>Suggestions:</p>
+                <ul>
+                  {scheduleStatus.suggestions.map((label) => (
+                    <li key={label}>{label}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </>
+        )}
         <p>
           Presentations:{" "}
           {draftCounts === null ? "Not generated" : draftCounts.presentations}

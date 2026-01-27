@@ -228,17 +228,17 @@
   - [x] deterministic output
 
 ### 6.4 Enforce hard constraints (v1 core)
-- [ ] Add per-team calendar checks during assignment:
-  - [ ] no overlaps across tracks
-  - [ ] min gap across tracks and within track
-- [ ] If placement fails:
-  - [ ] return structured failure code:
-    - [ ] `NO_VALID_ASSIGNMENT_WITH_GAP_CONSTRAINTS` or `UNSATISFIABLE_OVERLAP_CONSTRAINTS`
-  - [ ] include actionable suggestions
-- [ ] Tests:
-  - [ ] case where naive would violate gap but alternative placement exists
-  - [ ] case where gap makes schedule impossible → failure code
-  - [ ] success schedules have `validateSchedule` = no conflicts
+- [x] Add per-team calendar checks during assignment:
+  - [x] no overlaps across tracks
+  - [x] min gap across tracks and within track
+- [x] If placement fails:
+  - [x] return structured failure code:
+    - [x] `NO_VALID_ASSIGNMENT_WITH_GAP_CONSTRAINTS` or `UNSATISFIABLE_OVERLAP_CONSTRAINTS`
+  - [x] include actionable suggestions
+- [x] Tests:
+  - [x] case where naive would violate gap but alternative placement exists
+  - [x] case where gap makes schedule impossible → failure code
+  - [x] success schedules have `validateSchedule` = no conflicts
 
 ### 6.5 Repair loop (robustness)
 - [ ] Implement bounded repair mechanism:
