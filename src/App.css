@@ -261,6 +261,61 @@ button:disabled {
   margin-bottom: 0.75rem;
 }
 
+.schedule-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.5rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.mode-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.mode-label {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #3b475b;
+}
+
+.mode-buttons {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid #cbd2dc;
+  overflow: hidden;
+}
+
+.mode-button {
+  border-radius: 0;
+  border: none;
+  padding: 0.45rem 1rem;
+  font-size: 0.85rem;
+  background: #f3f5f9;
+}
+
+.mode-button.active,
+.mode-button[aria-pressed="true"] {
+  background: #1b2538;
+  color: #ffffff;
+}
+
+.mode-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.validate-block {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
 .tab-bar {
   display: flex;
   flex-wrap: wrap;
@@ -324,6 +379,15 @@ button:disabled {
   border-bottom: none;
 }
 
+.table-wrap tbody tr.conflict-row {
+  background: rgba(176, 44, 26, 0.08);
+}
+
+.table-wrap tbody tr.conflict-row th,
+.table-wrap tbody tr.conflict-row td {
+  border-bottom-color: rgba(176, 44, 26, 0.2);
+}
+
 .pill {
   display: inline-flex;
   align-items: center;
@@ -383,6 +447,17 @@ button:disabled {
   font-weight: 600;
   color: #8a94a6;
   background: #f3f1ec;
+}
+
+.grid-cell.conflict {
+  border-color: rgba(176, 44, 26, 0.6);
+  background: rgba(176, 44, 26, 0.08);
+  color: #7a271a;
+}
+
+.panel.conflicts {
+  border: 1px solid rgba(176, 44, 26, 0.2);
+  background: rgba(255, 255, 255, 0.85);
 }
 
 @media (max-width: 720px) {

@@ -242,6 +242,66 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows a conflict list after validation", async () => {
+    const user = userEvent.setup();
+    const slotStart1 = new Date(2026, 0, 15, 9, 0).getTime();
+    const slotEnd1 = new Date(2026, 0, 15, 9, 5).getTime();
+    const slotStart2 = new Date(2026, 0, 15, 9, 3).getTime();
+    const slotEnd2 = new Date(2026, 0, 15, 9, 8).getTime();
+
+    mockedGenerateSchedule.mockReturnValue({
+      ok: true,
+      schedule: {
+        slots: [
+          {
+            id: "ROBOT-1",
+            track: Track.ROBOT,
+            startMs: slotStart1,
+            endMs: slotEnd1,
+            resources: { tableIds: [1] },
+          },
+          {
+            id: "ROBOT-2",
+            track: Track.ROBOT,
+            startMs: slotStart2,
+            endMs: slotEnd2,
+            resources: { tableIds: [1] },
+          },
+        ],
+        assignments: [
+          {
+            id: "robot-1",
+            teamId: 1,
+            type: AssignmentType.ROBOT_MATCH,
+            slotId: "ROBOT-1",
+            resourceId: "1",
+            sequence: 1,
+          },
+          {
+            id: "robot-2",
+            teamId: 1,
+            type: AssignmentType.ROBOT_MATCH,
+            slotId: "ROBOT-2",
+            resourceId: "1",
+            sequence: 2,
+          },
+        ],
+        warnings: [],
+      },
+    });
+
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /generate schedule/i }));
+    await user.click(screen.getByRole("button", { name: /validate schedule/i }));
+
+    expect(screen.getByText("Conflicts")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Team 1 events overlap between slots ROBOT-1 and ROBOT-2."
+      )
+    ).toBeInTheDocument();
+  });
+
   it("renders robot and presentation grids with empty and filled cells", async () => {
     const user = userEvent.setup();
     const robotStart1 = new Date(2026, 0, 15, 9, 0).getTime();

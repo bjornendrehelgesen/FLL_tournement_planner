@@ -1,10 +1,11 @@
 import "./App.css";
 import { useEffect, useMemo, useState } from "react";
-import { generateSchedule, validateSetup } from "./engine";
+import { generateSchedule, validateSchedule, validateSetup } from "./engine";
 import { formatLocalDateTime, parseLocalDateTime } from "./domain/time";
 import type {
   Assignment,
   GenerateScheduleResult,
+  ScheduleConflict,
   SuggestionAction,
   Slot,
   Team,
@@ -36,6 +37,7 @@ const ROBOT_MATCHES_PER_TEAM = 3;
 const EMPTY_CELL_LABEL = "Empty";
 
 type ScheduleTab = "teams" | "robots" | "presentations";
+type EditMode = "manual" | "auto";
 type GridCell = { resourceId: number; teamId: number | null };
 type GridRow = { slotId: string; timeLabel: string; cells: GridCell[] };
 
@@ -83,6 +85,10 @@ function formatAssignmentCell(
     ? `${resourceLabel} ${assignment.resourceId}`
     : resourceLabel;
   return `${timeLabel} | ${resourceText}`;
+}
+
+function normalizeResourceId(resourceId: number | string): string {
+  return String(resourceId).trim();
 }
 
 function buildGridRows(
@@ -169,6 +175,10 @@ function App() {
   const [scheduleResult, setScheduleResult] =
     useState<GenerateScheduleResult | null>(null);
   const [activeTab, setActiveTab] = useState<ScheduleTab>("teams");
+  const [editMode, setEditMode] = useState<EditMode>("manual");
+  const [scheduleConflicts, setScheduleConflicts] = useState<
+    ScheduleConflict[] | null
+  >(null);
 
   const validation = useMemo(() => validateSetup(setup), [setup]);
   const errorMap = useMemo(() => {
@@ -241,6 +251,17 @@ function App() {
   const handleGenerate = () => {
     const result = generateSchedule(setup);
     setScheduleResult(result);
+    setScheduleConflicts(null);
+  };
+
+  const handleValidateSchedule = () => {
+    if (!scheduleResult || !scheduleResult.ok) return;
+    const conflicts = validateSchedule(
+      setup,
+      scheduleResult.schedule.slots,
+      scheduleResult.schedule.assignments
+    );
+    setScheduleConflicts(conflicts);
   };
 
   useEffect(() => {
@@ -323,6 +344,33 @@ function App() {
       };
     });
   }, [scheduleResult, setup.teams]);
+
+  const conflictTeamIds = useMemo(() => {
+    if (!scheduleConflicts || scheduleConflicts.length === 0) {
+      return new Set<number>();
+    }
+    return new Set(scheduleConflicts.flatMap((conflict) => conflict.teamIds));
+  }, [scheduleConflicts]);
+
+  const conflictCellKeys = useMemo(() => {
+    if (!scheduleConflicts || !scheduleResult || !scheduleResult.ok) {
+      return new Set<string>();
+    }
+    const keys = new Set<string>();
+    const assignments = scheduleResult.schedule.assignments;
+    for (const conflict of scheduleConflicts) {
+      const teamSet = new Set(conflict.teamIds);
+      const slotSet = new Set(conflict.slotIds);
+      for (const assignment of assignments) {
+        if (teamSet.size > 0 && !teamSet.has(assignment.teamId)) continue;
+        if (slotSet.size > 0 && !slotSet.has(assignment.slotId)) continue;
+        keys.add(
+          `${assignment.slotId}::${normalizeResourceId(assignment.resourceId)}`
+        );
+      }
+    }
+    return keys;
+  }, [scheduleConflicts, scheduleResult]);
 
   return (
     <div className="app">
@@ -660,6 +708,49 @@ function App() {
               </div>
               <div className="panel schedule-table">
                 <div className="panel-title">Schedule views</div>
+                <div className="schedule-toolbar">
+                  <div className="mode-switch">
+                    <span className="mode-label">Editing mode</span>
+                    <div className="mode-buttons" role="group" aria-label="Editing mode">
+                      <button
+                        type="button"
+                        className={`mode-button ${
+                          editMode === "manual" ? "active" : ""
+                        }`}
+                        aria-pressed={editMode === "manual"}
+                        onClick={() => setEditMode("manual")}
+                      >
+                        Manual
+                      </button>
+                      <button
+                        type="button"
+                        className="mode-button"
+                        disabled
+                        aria-disabled="true"
+                      >
+                        Auto-reshuffle (disabled)
+                      </button>
+                    </div>
+                  </div>
+                  <div className="validate-block">
+                    <button
+                      type="button"
+                      className="ghost"
+                      onClick={handleValidateSchedule}
+                    >
+                      Validate schedule
+                    </button>
+                    {scheduleConflicts && (
+                      <span className="hint">
+                        {scheduleConflicts.length === 0
+                          ? "No conflicts detected."
+                          : `${scheduleConflicts.length} conflict${
+                              scheduleConflicts.length === 1 ? "" : "s"
+                            } detected.`}
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <div className="tab-bar" role="tablist" aria-label="Schedule views">
                   <button
                     type="button"
@@ -692,6 +783,23 @@ function App() {
                   </button>
                 </div>
 
+                {scheduleConflicts && (
+                  <div className="panel conflicts">
+                    <div className="panel-title">Conflicts</div>
+                    {scheduleConflicts.length === 0 ? (
+                      <p className="hint">No conflicts detected.</p>
+                    ) : (
+                      <ul>
+                        {scheduleConflicts.map((conflict, index) => (
+                          <li key={`${conflict.type}-${index}`}>
+                            {conflict.message}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
                 {activeTab === "teams" && (
                   <>
                     <div className="schedule-view-title">Team schedule</div>
@@ -711,7 +819,14 @@ function App() {
                           </thead>
                           <tbody>
                             {scheduleTableRows.map((row) => (
-                              <tr key={row.teamId}>
+                              <tr
+                                key={row.teamId}
+                                className={
+                                  conflictTeamIds.has(row.teamId)
+                                    ? "conflict-row"
+                                    : ""
+                                }
+                              >
                                 <th scope="row">{row.teamLabel}</th>
                                 <td>
                                   {formatAssignmentCell(
@@ -769,18 +884,27 @@ function App() {
                                 gridTemplateColumns: `repeat(${row.cells.length}, minmax(80px, 1fr))`,
                               }}
                             >
-                              {row.cells.map((cell) => (
-                                <div
-                                  key={`${row.slotId}-cell-${cell.resourceId}`}
-                                  className={`grid-cell ${
-                                    cell.teamId === null ? "empty" : "filled"
-                                  }`}
-                                >
-                                  {cell.teamId === null
-                                    ? EMPTY_CELL_LABEL
-                                    : String(cell.teamId)}
-                                </div>
-                              ))}
+                              {row.cells.map((cell) => {
+                                const cellKey = `${row.slotId}::${normalizeResourceId(
+                                  cell.resourceId
+                                )}`;
+                                const isConflictCell =
+                                  (cell.teamId !== null &&
+                                    conflictTeamIds.has(cell.teamId)) ||
+                                  conflictCellKeys.has(cellKey);
+                                return (
+                                  <div
+                                    key={`${row.slotId}-cell-${cell.resourceId}`}
+                                    className={`grid-cell ${
+                                      cell.teamId === null ? "empty" : "filled"
+                                    } ${isConflictCell ? "conflict" : ""}`}
+                                  >
+                                    {cell.teamId === null
+                                      ? EMPTY_CELL_LABEL
+                                      : String(cell.teamId)}
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         ))}
@@ -825,18 +949,27 @@ function App() {
                                 gridTemplateColumns: `repeat(${row.cells.length}, minmax(80px, 1fr))`,
                               }}
                             >
-                              {row.cells.map((cell) => (
-                                <div
-                                  key={`${row.slotId}-cell-${cell.resourceId}`}
-                                  className={`grid-cell ${
-                                    cell.teamId === null ? "empty" : "filled"
-                                  }`}
-                                >
-                                  {cell.teamId === null
-                                    ? EMPTY_CELL_LABEL
-                                    : String(cell.teamId)}
-                                </div>
-                              ))}
+                              {row.cells.map((cell) => {
+                                const cellKey = `${row.slotId}::${normalizeResourceId(
+                                  cell.resourceId
+                                )}`;
+                                const isConflictCell =
+                                  (cell.teamId !== null &&
+                                    conflictTeamIds.has(cell.teamId)) ||
+                                  conflictCellKeys.has(cellKey);
+                                return (
+                                  <div
+                                    key={`${row.slotId}-cell-${cell.resourceId}`}
+                                    className={`grid-cell ${
+                                      cell.teamId === null ? "empty" : "filled"
+                                    } ${isConflictCell ? "conflict" : ""}`}
+                                  >
+                                    {cell.teamId === null
+                                      ? EMPTY_CELL_LABEL
+                                      : String(cell.teamId)}
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         ))}

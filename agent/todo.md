@@ -345,19 +345,19 @@ Toggles:
 ## 10) Editing Modes + Validation UI
 
 ### 10.1 Mode switch + validate action
-- [ ] Toggle: Manual / Auto-reshuffle
-- [ ] Button: “Validate schedule”
-- [ ] Conflict list panel:
-  - [ ] overlaps
-  - [ ] min gap violations
-  - [ ] double-booking
-  - [ ] invalid resource usage
-- [ ] Visual highlighting:
-  - [ ] highlight affected team rows
-  - [ ] highlight affected grid cells
+- [x] Toggle: Manual / Auto-reshuffle (auto disabled for now)
+- [x] Button: “Validate schedule”
+- [x] Conflict list panel:
+  - [x] overlaps
+  - [x] min gap violations
+  - [x] double-booking
+  - [x] invalid resource usage
+- [x] Visual highlighting:
+  - [x] highlight affected team rows
+  - [x] highlight affected grid cells
 
 ### 10.2 Tests
-- [ ] Known-invalid schedule shows expected conflicts
+- [x] Known-invalid schedule shows expected conflicts
 - [ ] Highlight markers appear for conflict targets
 
 ---
@@ -486,7 +486,7 @@ Toggles:
   - [ ] generates schedule meeting all hard constraints
   - [ ] team-centric table view works
   - [ ] track grids work
-  - [ ] manual mode + validate conflicts
+  - [x] manual mode + validate conflicts
   - [ ] auto-reshuffle mode keeps schedule valid or reverts with reason
   - [ ] setups saved/loaded locally
 
