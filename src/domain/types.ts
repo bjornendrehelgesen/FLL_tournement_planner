@@ -12,15 +12,18 @@ export interface Team {
   name?: string;
 }
 
-export enum Track {
-  ROBOT = "ROBOT",
-  PRESENTATION = "PRESENTATION",
-}
+export const Track = {
+  ROBOT: "ROBOT",
+  PRESENTATION: "PRESENTATION",
+} as const;
+export type Track = (typeof Track)[keyof typeof Track];
 
-export enum AssignmentType {
-  ROBOT_MATCH = "ROBOT_MATCH",
-  PRESENTATION = "PRESENTATION",
-}
+export const AssignmentType = {
+  ROBOT_MATCH: "ROBOT_MATCH",
+  PRESENTATION: "PRESENTATION",
+} as const;
+export type AssignmentType =
+  (typeof AssignmentType)[keyof typeof AssignmentType];
 
 export interface TimeWindow {
   startMs: EpochMs;
@@ -47,6 +50,10 @@ export interface Slot {
   track: Track;
   startMs: EpochMs;
   endMs: EpochMs;
+  resources: {
+    roomIds?: number[];
+    tableIds?: number[];
+  };
 }
 
 export interface Assignment {
@@ -56,6 +63,11 @@ export interface Assignment {
   slotId: SlotId;
   resourceId: ResourceId;
   sequence: number | null;
+}
+
+export interface Schedule {
+  slots: Slot[];
+  assignments: Assignment[];
 }
 
 export type SuggestionAction =

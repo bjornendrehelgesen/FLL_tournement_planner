@@ -12,6 +12,6 @@ describe("App", () => {
 
   it("renders engine status", () => {
     render(<App />);
-    expect(screen.getByText("Engine OK")).toBeInTheDocument();
+    expect(screen.getByText("Setup OK")).toBeInTheDocument();
   });
 });

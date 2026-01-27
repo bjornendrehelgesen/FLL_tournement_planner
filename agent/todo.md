@@ -80,62 +80,62 @@
 
 ## 2) Setup Validation (TDD)
 
-- [ ] Implement `validateSetup(setup)` returning `{ok:true}` or `{ok:false, errors:[...]}`
+- [x] Implement `validateSetup(setup)` returning `{ok:true}` or `{ok:false, errors:[...]}`
 
 ### 2.1 Required fields + numeric constraints
-- [ ] Reject `numberOfTeams <= 1`
-- [ ] Reject `robotTablesCount < 1`
-- [ ] Reject `presentationRoomsCount < 1`
-- [ ] Reject `minGapMinutes < 15`
+- [x] Reject `numberOfTeams <= 1`
+- [x] Reject `robotTablesCount < 1`
+- [x] Reject `presentationRoomsCount < 1`
+- [x] Reject `minGapMinutes < 15`
 
 ### 2.2 Window constraints
-- [ ] Robot: reject `robotStartTime >= robotEndTime`
-- [ ] Presentation: reject `presentationStartTime >= presentationEndTime`
+- [x] Robot: reject `robotStartTime >= robotEndTime`
+- [x] Presentation: reject `presentationStartTime >= presentationEndTime`
 
 ### 2.3 Break validation (per track)
-- [ ] Reject break with `start >= end`
-- [ ] Reject break outside window (start < window start OR end > window end)
-- [ ] Reject overlapping breaks within the same track
+- [x] Reject break with `start >= end`
+- [x] Reject break outside window (start < window start OR end > window end)
+- [x] Reject overlapping breaks within the same track
 - [ ] Allow adjacent breaks that touch (end == start) (decide and test)
 - [ ] Unit tests: each validation scenario with clear `path`s
 
 ### 2.4 Wire validation into UI (temporary)
-- [ ] App calls `validateSetup` on a hard-coded setup and renders “Setup OK” or first error code
+- [x] App calls `validateSetup` on a hard-coded setup and renders “Setup OK” or first error code
 
 ---
 
 ## 3) Slot Generation (TDD)
 
 ### 3.1 Presentation slots (30 minutes)
-- [ ] Implement `generatePresentationSlots(setup)`:
-  - [ ] Create sequential 30-minute slots within window
-  - [ ] Exclude any slot intersecting a break interval
-  - [ ] Include `roomIds = [1..roomsCount]` per slot
-  - [ ] Deterministic slot IDs (stable for tests)
-- [ ] Unit tests:
-  - [ ] correct slot count with no breaks
-  - [ ] excluded slots that intersect breaks
-  - [ ] all slots within window
-  - [ ] roomIds correct
+- [x] Implement `generatePresentationSlots(setup)`:
+  - [x] Create sequential 30-minute slots within window
+  - [x] Exclude any slot intersecting a break interval
+  - [x] Include `roomIds = [1..roomsCount]` per slot
+  - [x] Deterministic slot IDs (stable for tests)
+- [x] Unit tests:
+  - [x] correct slot count with no breaks
+  - [x] excluded slots that intersect breaks
+  - [x] all slots within window
+  - [x] roomIds correct
 
 ### 3.2 Robot slots (5 minutes) + A/B table alternation
-- [ ] Implement `generateRobotSlots(setup)`:
-  - [ ] Create sequential 5-minute slots within window
-  - [ ] Exclude any slot intersecting a break interval
-  - [ ] Determine active tables each slot by alternation:
-    - [ ] Group A: odd tables
-    - [ ] Group B: even tables
-    - [ ] Slot 1 uses A, slot 2 uses B, slot 3 uses A...
-  - [ ] Decide behavior for empty group (e.g., T=1 gives groupB empty):
-    - [ ] Prefer filtering out empty-table slots (document + test)
-  - [ ] Deterministic slot IDs
-- [ ] Unit tests:
-  - [ ] A/B alternation correct for T=1,2,3,4,6
-  - [ ] breaks exclusion correct
-  - [ ] tableIds only include active group for that slot
+- [x] Implement `generateRobotSlots(setup)`:
+  - [x] Create sequential 5-minute slots within window
+  - [x] Exclude any slot intersecting a break interval
+  - [x] Determine active tables each slot by alternation:
+    - [x] Group A: odd tables
+    - [x] Group B: even tables
+    - [x] Slot 1 uses A, slot 2 uses B, slot 3 uses A...
+  - [x] Decide behavior for empty group (e.g., T=1 gives groupB empty):
+    - [x] Prefer filtering out empty-table slots (document + test)
+  - [x] Deterministic slot IDs
+- [x] Unit tests:
+  - [x] A/B alternation correct for T=1,2,3,4,6
+  - [x] breaks exclusion correct
+  - [x] tableIds only include active group for that slot
 
 ### 3.3 Wire into UI (temporary)
-- [ ] App displays counts: robot slots, presentation slots, robot capacity (sum of tableIds)
+- [x] App displays counts: robot slots, presentation slots, robot capacity (sum of tableIds)
 
 ---
 
