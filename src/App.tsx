@@ -1,5 +1,5 @@
 import "./App.css";
-import { validateSetup } from "./engine";
+import { capacityCheck, validateSetup } from "./engine";
 import { presentationSlots } from "./engine/slots/presentationSlots";
 import { robotSlots } from "./engine/slots/robotSlots";
 import type { TournamentSetup } from "./domain";
@@ -43,6 +43,7 @@ function App() {
     (sum, slot) => sum + (slot.resources.tableIds?.length ?? 0),
     0,
   );
+  const capacityResult = capacityCheck(setup);
 
   return (
     <div className="app">
@@ -52,6 +53,16 @@ function App() {
       <section className="engine-status" aria-label="Engine status">
         <h2>Engine status</h2>
         <p>{engineStatus}</p>
+        <p>Capacity status:</p>
+        {capacityResult.ok ? (
+          <p>Capacity OK</p>
+        ) : (
+          <ul>
+            {capacityResult.errors.map((error) => (
+              <li key={error.code}>{error.code}</li>
+            ))}
+          </ul>
+        )}
         <p>Presentation slots: {presentationSlotsCount}</p>
         <p>Robot slots: {robotSlotsList.length}</p>
         <p>Robot capacity: {robotCapacity} (sum of active tables)</p>

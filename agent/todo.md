@@ -142,29 +142,29 @@
 
 ## 4) Capacity + Feasibility Checks (TDD)
 
-- [ ] Implement `capacityCheck(setup, robotSlots, presentationSlots)`:
-  - [ ] robot capacity = sum(slot.tableIds.length)
-  - [ ] presentation capacity = presentationSlots.length * roomsCount
-  - [ ] need robot = 3 * N
-  - [ ] need presentation = 1 * N
-- [ ] Return `{ok:true}` or `{ok:false, errors:[...], suggestions:[...]}`
+- [x] Implement `capacityCheck(setup, robotSlots, presentationSlots)`:
+  - [x] robot capacity = sum(slot.tableIds.length)
+  - [x] presentation capacity = presentationSlots.length * roomsCount
+  - [x] need robot = 3 * N
+  - [x] need presentation = 1 * N
+- [x] Return `{ok:true}` or `{ok:false, errors:[...], suggestions:[...]}`
 
 ### 4.1 Suggestions
-- [ ] If insufficient robot capacity:
-  - [ ] Suggest increase tables and/or extend robot end time
-- [ ] If insufficient presentation capacity:
-  - [ ] Suggest increase rooms and/or extend presentation end time
-- [ ] If `minGapMinutes > 15`, optionally suggest reducing (never below 15)
+- [x] If insufficient robot capacity:
+  - [x] Suggest increase tables and/or extend robot end time
+- [x] If insufficient presentation capacity:
+  - [x] Suggest increase rooms and/or extend presentation end time
+- [x] If `minGapMinutes > 15`, optionally suggest reducing (never below 15)
 
 ### 4.2 Tests
-- [ ] Boundary cases (exactly enough)
-- [ ] Robot insufficient
-- [ ] Presentation insufficient
-- [ ] Both insufficient
-- [ ] Suggestions appear correctly
+- [x] Boundary cases (exactly enough)
+- [x] Robot insufficient
+- [x] Presentation insufficient
+- [x] Both insufficient
+- [x] Suggestions appear correctly
 
 ### 4.3 Wire into UI (temporary)
-- [ ] App shows “Capacity OK” or lists feasibility errors
+- [x] App shows “Capacity OK” or lists feasibility errors
 
 ---
 

@@ -100,3 +100,7 @@ export type GenerateScheduleResult =
       schedule: ValidSchedule;
     }
   | { ok: false; errors: DomainError[]; suggestions: SuggestionAction[] };
+
+export type CapacityCheckResult =
+  | { ok: true }
+  | { ok: false; errors: DomainError[]; suggestions: SuggestionAction[] };
