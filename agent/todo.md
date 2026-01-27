@@ -133,6 +133,7 @@
   - [x] A/B alternation correct for T=1,2,3,4,6
   - [x] breaks exclusion correct
   - [x] tableIds only include active group for that slot
+  - [x] expectations account for skipped empty-group slots
 
 ### 3.3 Wire into UI (temporary)
 - [x] App displays counts: robot slots, presentation slots, robot capacity (sum of tableIds)
