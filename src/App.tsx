@@ -1,11 +1,12 @@
 import "./App.css";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { generateSchedule, validateSetup } from "./engine";
 import { formatLocalDateTime, parseLocalDateTime } from "./domain/time";
 import type {
   Assignment,
   GenerateScheduleResult,
   SuggestionAction,
+  Slot,
   Team,
   TournamentSetup,
 } from "./domain";
@@ -32,6 +33,11 @@ const DEFAULT_SETUP: TournamentSetup = {
 
 const DEFAULT_BREAK_MINUTES = 15;
 const ROBOT_MATCHES_PER_TEAM = 3;
+const EMPTY_CELL_LABEL = "Empty";
+
+type ScheduleTab = "teams" | "robots" | "presentations";
+type GridCell = { resourceId: number; teamId: number | null };
+type GridRow = { slotId: string; timeLabel: string; cells: GridCell[] };
 
 function buildTeams(count: number): Team[] {
   if (!Number.isFinite(count) || count <= 0) return [];
@@ -77,6 +83,43 @@ function formatAssignmentCell(
     ? `${resourceLabel} ${assignment.resourceId}`
     : resourceLabel;
   return `${timeLabel} | ${resourceText}`;
+}
+
+function buildGridRows(
+  slots: Slot[],
+  assignments: Assignment[],
+  track: Track,
+  resourceKey: "tableIds" | "roomIds"
+): GridRow[] {
+  const assignmentByCell = new Map<string, Assignment>();
+
+  for (const assignment of assignments) {
+    assignmentByCell.set(`${assignment.slotId}::${assignment.resourceId}`, assignment);
+  }
+
+  return [...slots]
+    .filter((slot) => slot.track === track)
+    .sort((a, b) => a.startMs - b.startMs || a.id.localeCompare(b.id))
+    .map((slot) => {
+      const resourceIds = [...(slot.resources[resourceKey] ?? [])].sort(
+        (a, b) => a - b
+      );
+      const cells = resourceIds.map((resourceId) => {
+        const assignment = assignmentByCell.get(
+          `${slot.id}::${resourceId}`
+        );
+        return {
+          resourceId,
+          teamId: assignment ? assignment.teamId : null,
+        };
+      });
+
+      return {
+        slotId: slot.id,
+        timeLabel: formatTimeRange(slot.startMs, slot.endMs),
+        cells,
+      };
+    });
 }
 
 function formatSuggestion(suggestion: SuggestionAction): string {
@@ -125,6 +168,7 @@ function App() {
   const [setup, setSetup] = useState<TournamentSetup>(DEFAULT_SETUP);
   const [scheduleResult, setScheduleResult] =
     useState<GenerateScheduleResult | null>(null);
+  const [activeTab, setActiveTab] = useState<ScheduleTab>("teams");
 
   const validation = useMemo(() => validateSetup(setup), [setup]);
   const errorMap = useMemo(() => {
@@ -199,6 +243,12 @@ function App() {
     setScheduleResult(result);
   };
 
+  useEffect(() => {
+    if (scheduleResult && scheduleResult.ok) {
+      setActiveTab("teams");
+    }
+  }, [scheduleResult]);
+
   const scheduleSummary =
     scheduleResult && scheduleResult.ok
       ? {
@@ -211,6 +261,24 @@ function App() {
           warnings: scheduleResult.schedule.warnings,
         }
       : null;
+
+  const scheduleGridRows = useMemo(() => {
+    if (!scheduleResult || !scheduleResult.ok) return null;
+    return {
+      robot: buildGridRows(
+        scheduleResult.schedule.slots,
+        scheduleResult.schedule.assignments,
+        Track.ROBOT,
+        "tableIds"
+      ),
+      presentation: buildGridRows(
+        scheduleResult.schedule.slots,
+        scheduleResult.schedule.assignments,
+        Track.PRESENTATION,
+        "roomIds"
+      ),
+    };
+  }, [scheduleResult]);
 
   const scheduleTableRows = useMemo(() => {
     if (!scheduleResult || !scheduleResult.ok) return [];
@@ -591,46 +659,190 @@ function App() {
                 )}
               </div>
               <div className="panel schedule-table">
-                <div className="panel-title">Team schedule</div>
-                {scheduleTableRows.length === 0 ? (
-                  <p className="hint">No assignments to show yet.</p>
-                ) : (
-                  <div className="table-wrap">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th scope="col">Team</th>
-                          <th scope="col">Presentation (time + room)</th>
-                          <th scope="col">Robot match 1 (time + table)</th>
-                          <th scope="col">Robot match 2 (time + table)</th>
-                          <th scope="col">Robot match 3 (time + table)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {scheduleTableRows.map((row) => (
-                          <tr key={row.teamId}>
-                            <th scope="row">{row.teamLabel}</th>
-                            <td>
-                              {formatAssignmentCell(
-                                row.presentation,
-                                row.slotById,
-                                "Room"
-                              )}
-                            </td>
-                            {row.robotMatches.map((match, index) => (
-                              <td key={`${row.teamId}-match-${index + 1}`}>
-                                {formatAssignmentCell(
-                                  match,
-                                  row.slotById,
-                                  "Table"
-                                )}
-                              </td>
+                <div className="panel-title">Schedule views</div>
+                <div className="tab-bar" role="tablist" aria-label="Schedule views">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === "teams"}
+                    className={`tab-button ${activeTab === "teams" ? "active" : ""}`}
+                    onClick={() => setActiveTab("teams")}
+                  >
+                    Teams
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === "robots"}
+                    className={`tab-button ${activeTab === "robots" ? "active" : ""}`}
+                    onClick={() => setActiveTab("robots")}
+                  >
+                    Robot track
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === "presentations"}
+                    className={`tab-button ${
+                      activeTab === "presentations" ? "active" : ""
+                    }`}
+                    onClick={() => setActiveTab("presentations")}
+                  >
+                    Presentation track
+                  </button>
+                </div>
+
+                {activeTab === "teams" && (
+                  <>
+                    <div className="schedule-view-title">Team schedule</div>
+                    {scheduleTableRows.length === 0 ? (
+                      <p className="hint">No assignments to show yet.</p>
+                    ) : (
+                      <div className="table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th scope="col">Team</th>
+                              <th scope="col">Presentation (time + room)</th>
+                              <th scope="col">Robot match 1 (time + table)</th>
+                              <th scope="col">Robot match 2 (time + table)</th>
+                              <th scope="col">Robot match 3 (time + table)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {scheduleTableRows.map((row) => (
+                              <tr key={row.teamId}>
+                                <th scope="row">{row.teamLabel}</th>
+                                <td>
+                                  {formatAssignmentCell(
+                                    row.presentation,
+                                    row.slotById,
+                                    "Room"
+                                  )}
+                                </td>
+                                {row.robotMatches.map((match, index) => (
+                                  <td key={`${row.teamId}-match-${index + 1}`}>
+                                    {formatAssignmentCell(
+                                      match,
+                                      row.slotById,
+                                      "Table"
+                                    )}
+                                  </td>
+                                ))}
+                              </tr>
                             ))}
-                          </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {activeTab === "robots" && (
+                  <>
+                    <div className="schedule-view-title">Robot grid</div>
+                    {scheduleGridRows && scheduleGridRows.robot.length === 0 ? (
+                      <p className="hint">No robot slots available.</p>
+                    ) : (
+                      <div className="schedule-grid" role="region" aria-label="Robot grid">
+                        {scheduleGridRows?.robot.map((row) => (
+                          <div className="grid-row" key={row.slotId}>
+                            <div className="grid-row-label">{row.timeLabel}</div>
+                            <div
+                              className="grid-row-head"
+                              style={{
+                                gridTemplateColumns: `repeat(${row.cells.length}, minmax(80px, 1fr))`,
+                              }}
+                            >
+                              {row.cells.map((cell) => (
+                                <div
+                                  key={`${row.slotId}-header-${cell.resourceId}`}
+                                  className="grid-header-cell"
+                                >
+                                  Table {cell.resourceId}
+                                </div>
+                              ))}
+                            </div>
+                            <div
+                              className="grid-row-cells"
+                              style={{
+                                gridTemplateColumns: `repeat(${row.cells.length}, minmax(80px, 1fr))`,
+                              }}
+                            >
+                              {row.cells.map((cell) => (
+                                <div
+                                  key={`${row.slotId}-cell-${cell.resourceId}`}
+                                  className={`grid-cell ${
+                                    cell.teamId === null ? "empty" : "filled"
+                                  }`}
+                                >
+                                  {cell.teamId === null
+                                    ? EMPTY_CELL_LABEL
+                                    : String(cell.teamId)}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {activeTab === "presentations" && (
+                  <>
+                    <div className="schedule-view-title">Presentation grid</div>
+                    {scheduleGridRows &&
+                    scheduleGridRows.presentation.length === 0 ? (
+                      <p className="hint">No presentation slots available.</p>
+                    ) : (
+                      <div
+                        className="schedule-grid"
+                        role="region"
+                        aria-label="Presentation grid"
+                      >
+                        {scheduleGridRows?.presentation.map((row) => (
+                          <div className="grid-row" key={row.slotId}>
+                            <div className="grid-row-label">{row.timeLabel}</div>
+                            <div
+                              className="grid-row-head"
+                              style={{
+                                gridTemplateColumns: `repeat(${row.cells.length}, minmax(80px, 1fr))`,
+                              }}
+                            >
+                              {row.cells.map((cell) => (
+                                <div
+                                  key={`${row.slotId}-header-${cell.resourceId}`}
+                                  className="grid-header-cell"
+                                >
+                                  Room {cell.resourceId}
+                                </div>
+                              ))}
+                            </div>
+                            <div
+                              className="grid-row-cells"
+                              style={{
+                                gridTemplateColumns: `repeat(${row.cells.length}, minmax(80px, 1fr))`,
+                              }}
+                            >
+                              {row.cells.map((cell) => (
+                                <div
+                                  key={`${row.slotId}-cell-${cell.resourceId}`}
+                                  className={`grid-cell ${
+                                    cell.teamId === null ? "empty" : "filled"
+                                  }`}
+                                >
+                                  {cell.teamId === null
+                                    ? EMPTY_CELL_LABEL
+                                    : String(cell.teamId)}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>

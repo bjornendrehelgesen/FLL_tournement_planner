@@ -325,20 +325,20 @@ Toggles:
 - [x] Nice time formatting
 
 ### 9.3 Track grids (secondary)
-- [ ] Tabs: Teams / Robot track / Presentation track
-- [ ] Robot grid:
-  - [ ] rows = robot slots
-  - [ ] columns = active tables for that slot
-  - [ ] cells show team or empty
-- [ ] Presentation grid:
-  - [ ] rows = presentation slots
-  - [ ] columns = rooms
-  - [ ] cells show team or empty
+- [x] Tabs: Teams / Robot track / Presentation track
+- [x] Robot grid:
+  - [x] rows = robot slots
+  - [x] columns = active tables for that slot
+  - [x] cells show team or empty
+- [x] Presentation grid:
+  - [x] rows = presentation slots
+  - [x] columns = rooms
+  - [x] cells show team or empty
 
 ### 9.4 Tests
 - [x] Render test for result state (success/failure)
 - [x] Render test for team table from fixture schedule
-- [ ] Render test for robot/presentation grids from fixture schedule
+- [x] Render test for robot/presentation grids from fixture schedule
 
 ---
 

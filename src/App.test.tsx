@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
@@ -240,5 +240,105 @@ describe("App", () => {
     expect(
       screen.getByText(/increase robot tables by 1/i)
     ).toBeInTheDocument();
+  });
+
+  it("renders robot and presentation grids with empty and filled cells", async () => {
+    const user = userEvent.setup();
+    const robotStart1 = new Date(2026, 0, 15, 9, 0).getTime();
+    const robotEnd1 = new Date(2026, 0, 15, 9, 5).getTime();
+    const robotStart2 = new Date(2026, 0, 15, 9, 5).getTime();
+    const robotEnd2 = new Date(2026, 0, 15, 9, 10).getTime();
+    const presentationStart1 = new Date(2026, 0, 15, 9, 30).getTime();
+    const presentationEnd1 = new Date(2026, 0, 15, 10, 0).getTime();
+    const presentationStart2 = new Date(2026, 0, 15, 10, 0).getTime();
+    const presentationEnd2 = new Date(2026, 0, 15, 10, 30).getTime();
+
+    mockedGenerateSchedule.mockReturnValue({
+      ok: true,
+      schedule: {
+        slots: [
+          {
+            id: `ROBOT-${robotStart1}`,
+            track: Track.ROBOT,
+            startMs: robotStart1,
+            endMs: robotEnd1,
+            resources: { tableIds: [1, 2] },
+          },
+          {
+            id: `ROBOT-${robotStart2}`,
+            track: Track.ROBOT,
+            startMs: robotStart2,
+            endMs: robotEnd2,
+            resources: { tableIds: [1, 2] },
+          },
+          {
+            id: `PRESENTATION-${presentationStart1}`,
+            track: Track.PRESENTATION,
+            startMs: presentationStart1,
+            endMs: presentationEnd1,
+            resources: { roomIds: [1, 2] },
+          },
+          {
+            id: `PRESENTATION-${presentationStart2}`,
+            track: Track.PRESENTATION,
+            startMs: presentationStart2,
+            endMs: presentationEnd2,
+            resources: { roomIds: [1, 2] },
+          },
+        ],
+        assignments: [
+          {
+            id: "robot-slot-1",
+            teamId: 1,
+            type: AssignmentType.ROBOT_MATCH,
+            slotId: `ROBOT-${robotStart1}`,
+            resourceId: "1",
+            sequence: 1,
+          },
+          {
+            id: "robot-slot-2",
+            teamId: 2,
+            type: AssignmentType.ROBOT_MATCH,
+            slotId: `ROBOT-${robotStart2}`,
+            resourceId: "2",
+            sequence: 2,
+          },
+          {
+            id: "presentation-slot-1",
+            teamId: 3,
+            type: AssignmentType.PRESENTATION,
+            slotId: `PRESENTATION-${presentationStart1}`,
+            resourceId: "1",
+            sequence: null,
+          },
+          {
+            id: "presentation-slot-2",
+            teamId: 4,
+            type: AssignmentType.PRESENTATION,
+            slotId: `PRESENTATION-${presentationStart2}`,
+            resourceId: "2",
+            sequence: null,
+          },
+        ],
+        warnings: [],
+      },
+    });
+
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /generate schedule/i }));
+
+    await user.click(screen.getByRole("tab", { name: "Robot track" }));
+    const robotGrid = screen.getByRole("region", { name: "Robot grid" });
+    expect(within(robotGrid).getByText("1")).toBeInTheDocument();
+    expect(within(robotGrid).getByText("2")).toBeInTheDocument();
+    expect(within(robotGrid).getAllByText("Empty")).toHaveLength(2);
+
+    await user.click(screen.getByRole("tab", { name: "Presentation track" }));
+    const presentationGrid = screen.getByRole("region", {
+      name: "Presentation grid",
+    });
+    expect(within(presentationGrid).getByText("3")).toBeInTheDocument();
+    expect(within(presentationGrid).getByText("4")).toBeInTheDocument();
+    expect(within(presentationGrid).getAllByText("Empty")).toHaveLength(2);
   });
 });

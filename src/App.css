@@ -261,6 +261,33 @@ button:disabled {
   margin-bottom: 0.75rem;
 }
 
+.tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.tab-button {
+  border: 1px solid #cbd2dc;
+  background: #f3f5f9;
+  color: #1b2538;
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+}
+
+.tab-button.active,
+.tab-button[aria-selected="true"] {
+  background: #1b2538;
+  color: #ffffff;
+  border-color: #1b2538;
+}
+
+.schedule-view-title {
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
@@ -312,6 +339,50 @@ button:disabled {
 .apply-button {
   padding: 0.35rem 0.9rem;
   font-size: 0.8rem;
+}
+
+.schedule-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.grid-row {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.grid-row-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #3b475b;
+}
+
+.grid-row-head,
+.grid-row-cells {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.grid-header-cell {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5a6476;
+}
+
+.grid-cell {
+  border-radius: 10px;
+  padding: 0.55rem 0.5rem;
+  text-align: center;
+  font-weight: 700;
+  border: 1px solid rgba(27, 37, 56, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.grid-cell.empty {
+  font-weight: 600;
+  color: #8a94a6;
+  background: #f3f1ec;
 }
 
 @media (max-width: 720px) {
