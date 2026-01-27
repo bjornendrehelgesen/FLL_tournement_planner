@@ -229,6 +229,9 @@ describe("App", () => {
     });
 
     render(<App />);
+    await user.click(
+      screen.getByLabelText(/suggest resource increases/i)
+    );
     await user.click(screen.getByRole("button", { name: /generate schedule/i }));
 
     expect(

@@ -159,6 +159,19 @@ function buildGridRows(
     });
 }
 
+function shouldShowSuggestion(
+  suggestion: SuggestionAction,
+  setup: TournamentSetup,
+): boolean {
+  switch (suggestion.action) {
+    case "ADD_BREAK":
+    case "ADJUST_BREAKS":
+      return setup.suggestBreaks;
+    default:
+      return setup.suggestResources;
+  }
+}
+
 function formatSuggestion(suggestion: SuggestionAction): string {
   switch (suggestion.action) {
     case "INCREASE_ROBOT_TABLES":
@@ -187,7 +200,7 @@ function formatSuggestion(suggestion: SuggestionAction): string {
       const windowLabel = `${formatLocalDateTime(
         suggestion.window.startMs
       )} to ${formatLocalDateTime(suggestion.window.endMs)}`;
-      return `Add a ${trackLabel} break from ${windowLabel}.`;
+      return `Add a ${trackLabel} break from ${windowLabel} (creates separation between tracks).`;
     }
     case "ADJUST_BREAKS": {
       const trackLabel =
@@ -507,6 +520,13 @@ function App() {
           warnings: scheduleResult.schedule.warnings,
         }
       : null;
+
+  const visibleSuggestions =
+    scheduleResult && !scheduleResult.ok
+      ? scheduleResult.suggestions.filter((suggestion) =>
+          shouldShowSuggestion(suggestion, setup)
+        )
+      : [];
 
   const scheduleGridRows = useMemo(() => {
     if (!scheduleResult || !scheduleResult.ok) return null;
@@ -1453,11 +1473,11 @@ function App() {
               </div>
               <div className="panel suggestions">
                 <div className="panel-title">Suggestions</div>
-                {scheduleResult.suggestions.length === 0 ? (
+                {visibleSuggestions.length === 0 ? (
                   <p className="hint">No suggestions available yet.</p>
                 ) : (
                   <ul>
-                    {scheduleResult.suggestions.map((suggestion, index) => (
+                    {visibleSuggestions.map((suggestion, index) => (
                       <li key={`${suggestion.action}-${index}`}>
                         <span>{formatSuggestion(suggestion)}</span>
                         <button

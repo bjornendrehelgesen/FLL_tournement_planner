@@ -8,7 +8,7 @@ import type {
   TeamId,
   TournamentSetup,
 } from "../domain";
-import { AssignmentType, Track, diffMinutes, overlaps } from "../domain";
+import { AssignmentType, Track, addMinutes, diffMinutes, overlaps } from "../domain";
 import { capacityCheck } from "./feasibility/capacityCheck";
 import { presentationSlots } from "./slots/presentationSlots";
 import { robotSlots } from "./slots/robotSlots";
@@ -51,22 +51,45 @@ function buildFeasibilityError(
 function buildConstraintSuggestions(
   setup: TournamentSetup,
   track: Track,
+  context?: {
+    reason?: ConstraintFailureReason;
+    robotSlots: Slot[];
+    presentationSlots: Slot[];
+  },
 ): SuggestionAction[] {
   const suggestions: SuggestionAction[] = [];
 
-  if (track === Track.ROBOT) {
-    suggestions.push({ action: "INCREASE_ROBOT_TABLES" });
-    suggestions.push({ action: "EXTEND_ROBOT_END_TIME" });
-  } else {
-    suggestions.push({ action: "INCREASE_PRESENTATION_ROOMS" });
-    suggestions.push({ action: "EXTEND_PRESENTATION_END_TIME" });
+  if (setup.suggestResources) {
+    if (track === Track.ROBOT) {
+      suggestions.push({ action: "INCREASE_ROBOT_TABLES" });
+      suggestions.push({ action: "EXTEND_ROBOT_END_TIME" });
+    } else {
+      suggestions.push({ action: "INCREASE_PRESENTATION_ROOMS" });
+      suggestions.push({ action: "EXTEND_PRESENTATION_END_TIME" });
+    }
+
+    if (setup.minGapMinutes > MIN_GAP_FLOOR_MINUTES) {
+      suggestions.push({
+        action: "REDUCE_MIN_GAP",
+        minutes: MIN_GAP_FLOOR_MINUTES,
+      });
+    }
   }
 
-  if (setup.minGapMinutes > MIN_GAP_FLOOR_MINUTES) {
-    suggestions.push({
-      action: "REDUCE_MIN_GAP",
-      minutes: MIN_GAP_FLOOR_MINUTES,
-    });
+  if (
+    setup.suggestBreaks &&
+    context?.reason === "gap" &&
+    context.robotSlots.length > 0 &&
+    context.presentationSlots.length > 0
+  ) {
+    const breakSuggestion = findSeparationBreakSuggestion(
+      setup,
+      context.robotSlots,
+      context.presentationSlots,
+    );
+    if (breakSuggestion) {
+      suggestions.push(breakSuggestion);
+    }
   }
 
   return suggestions;
@@ -157,6 +180,62 @@ function sortSlots(slots: Slot[], track: Track): Slot[] {
   return [...slots]
     .filter((slot) => slot.track === track)
     .sort((a, b) => a.startMs - b.startMs || a.id.localeCompare(b.id));
+}
+
+function findSeparationBreakSuggestion(
+  setup: TournamentSetup,
+  robotSlotsList: Slot[],
+  presentationSlotsList: Slot[],
+): SuggestionAction | null {
+  if (setup.minGapMinutes <= 0) return null;
+
+  const robotBoundaries = robotSlotsList.flatMap((slot) => [
+    slot.startMs,
+    slot.endMs,
+  ]);
+  const presentationBoundaries = presentationSlotsList.flatMap((slot) => [
+    slot.startMs,
+    slot.endMs,
+  ]);
+
+  if (robotBoundaries.length === 0 || presentationBoundaries.length === 0) {
+    return null;
+  }
+
+  let closestDiffMs = Number.POSITIVE_INFINITY;
+  let closestRobotBoundary: EpochMs | null = null;
+
+  for (const robotBoundary of robotBoundaries) {
+    for (const presentationBoundary of presentationBoundaries) {
+      const diff = Math.abs(robotBoundary - presentationBoundary);
+      if (diff < closestDiffMs) {
+        closestDiffMs = diff;
+        closestRobotBoundary = robotBoundary;
+      }
+    }
+  }
+
+  if (
+    closestRobotBoundary === null ||
+    closestDiffMs >= setup.minGapMinutes * 60_000
+  ) {
+    return null;
+  }
+
+  const breakMinutes = Math.min(setup.minGapMinutes, 10);
+  const breakStartMs = Math.max(closestRobotBoundary, setup.robotStartMs);
+  const breakEndMs = Math.min(
+    addMinutes(breakStartMs, breakMinutes),
+    setup.robotEndMs,
+  );
+
+  if (breakEndMs <= breakStartMs) return null;
+
+  return {
+    action: "ADD_BREAK",
+    track: Track.ROBOT,
+    window: { startMs: breakStartMs, endMs: breakEndMs },
+  };
 }
 
 export function generateSchedule(setup: TournamentSetup): GenerateScheduleResult {
@@ -267,7 +346,11 @@ export function generateSchedule(setup: TournamentSetup): GenerateScheduleResult
             { teamId: team.id },
           ),
         ],
-        suggestions: buildConstraintSuggestions(setup, Track.PRESENTATION),
+        suggestions: buildConstraintSuggestions(setup, Track.PRESENTATION, {
+          reason: sawGapFailure ? "gap" : "overlap",
+          robotSlots: robotSlotsList,
+          presentationSlots: presentationSlotsList,
+        }),
       };
     }
   }
@@ -352,10 +435,14 @@ export function generateSchedule(setup: TournamentSetup): GenerateScheduleResult
               { teamId: team.id, sequence },
             ),
           ],
-          suggestions: buildConstraintSuggestions(setup, Track.ROBOT),
-        };
-      }
+        suggestions: buildConstraintSuggestions(setup, Track.ROBOT, {
+          reason: sawGapFailure ? "gap" : "overlap",
+          robotSlots: robotSlotsList,
+          presentationSlots: presentationSlotsList,
+        }),
+      };
     }
+  }
 
     minStartMs = phaseEndMs;
   }

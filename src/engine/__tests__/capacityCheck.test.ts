@@ -70,6 +70,7 @@ describe("capacityCheck", () => {
       robotEndMs: 20 * MINUTE_MS,
       presentationEndMs: 30 * MINUTE_MS,
       minGapMinutes: 25,
+      suggestResources: true,
     });
 
     const result = capacityCheck(setup);
@@ -78,10 +79,19 @@ describe("capacityCheck", () => {
     if (!result.ok) {
       expect(result.suggestions).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ action: "INCREASE_ROBOT_TABLES" }),
-          expect.objectContaining({ action: "EXTEND_ROBOT_END_TIME" }),
-          expect.objectContaining({ action: "INCREASE_PRESENTATION_ROOMS" }),
-          expect.objectContaining({ action: "EXTEND_PRESENTATION_END_TIME" }),
+          expect.objectContaining({ action: "INCREASE_ROBOT_TABLES", by: 3 }),
+          expect.objectContaining({
+            action: "EXTEND_ROBOT_END_TIME",
+            minutes: 25,
+          }),
+          expect.objectContaining({
+            action: "INCREASE_PRESENTATION_ROOMS",
+            by: 2,
+          }),
+          expect.objectContaining({
+            action: "EXTEND_PRESENTATION_END_TIME",
+            minutes: 60,
+          }),
           expect.objectContaining({ action: "REDUCE_MIN_GAP", minutes: 15 }),
         ]),
       );

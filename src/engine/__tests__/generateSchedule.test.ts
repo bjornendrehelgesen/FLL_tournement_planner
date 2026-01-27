@@ -70,4 +70,40 @@ describe("generateSchedule gap constraints", () => {
       "NO_VALID_ASSIGNMENT_WITH_GAP_CONSTRAINTS",
     );
   });
+
+  it("suggests a buffer break when gap failures align poorly across tracks", () => {
+    const setup = buildSetup({
+      minGapMinutes: 120,
+      robotEndMs: 90 * MINUTE_MS,
+      suggestBreaks: true,
+      suggestResources: false,
+    });
+
+    const result = generateSchedule(setup);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+
+    expect(result.suggestions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ action: "ADD_BREAK", track: "ROBOT" }),
+      ]),
+    );
+  });
+
+  it("does not suggest breaks when the toggle is off", () => {
+    const setup = buildSetup({
+      minGapMinutes: 120,
+      robotEndMs: 90 * MINUTE_MS,
+      suggestBreaks: false,
+      suggestResources: false,
+    });
+
+    const result = generateSchedule(setup);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+
+    expect(result.suggestions).toHaveLength(0);
+  });
 });

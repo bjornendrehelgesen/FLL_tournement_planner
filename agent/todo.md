@@ -437,20 +437,20 @@ Toggles:
 ## 14) Recommendations (v1 minimal, explainable)
 
 ### 14.1 suggest_resources
-- [ ] If capacity insufficient:
-  - [ ] compute minimal additional tables/rooms to meet capacity
-  - [ ] or minimal window extension to meet capacity
-- [ ] Present as suggestions (no auto changes)
+- [x] If capacity insufficient:
+  - [x] compute minimal additional tables/rooms to meet capacity
+  - [x] or minimal window extension to meet capacity
+- [x] Present as suggestions (no auto changes)
 
 ### 14.2 suggest_breaks (minimal heuristic)
-- [ ] Add explainable heuristic:
-  - [ ] if min-gap feasibility fails due to track misalignment, suggest a short buffer break at a specific time
-- [ ] Ensure suggestions only appear when toggle enabled
+- [x] Add explainable heuristic:
+  - [x] if min-gap feasibility fails due to track misalignment, suggest a short buffer break at a specific time
+- [x] Ensure suggestions only appear when toggle enabled
 
 ### 14.3 Tests
-- [ ] suggestions appear only when toggles on
-- [ ] capacity-based suggestion correctness
-- [ ] break suggestion is explainable (message includes why)
+- [x] suggestions appear only when toggles on
+- [x] capacity-based suggestion correctness
+- [x] break suggestion is explainable (message includes why)
 
 ---
 
