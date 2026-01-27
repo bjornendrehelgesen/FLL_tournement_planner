@@ -215,17 +215,17 @@
   - [x] respects capacity (assume checked earlier)
 
 ### 6.3 Assign robots (3 matches per team)
-- [ ] Implement `assignRobotMatches(setup, robotSlots)`:
-  - [ ] Build ordered list of “cells” = (slotId, tableId)
-  - [ ] Allocate matches in round-robin:
-    - [ ] For sequence 1..3, for team 1..N, pick next available cell
-  - [ ] No table double-booking
-  - [ ] Sequence preserved (1..3)
-- [ ] Tests:
-  - [ ] each team gets exactly 3 robot matches
-  - [ ] no double-booking
-  - [ ] assigned table is valid for that slot
-  - [ ] deterministic output
+- [x] Implement `assignRobotMatches(setup, robotSlots)`:
+  - [x] Build ordered list of “cells” = (slotId, tableId)
+  - [x] Allocate matches in round-robin:
+    - [x] For sequence 1..3, for team 1..N, pick next available cell
+  - [x] No table double-booking
+  - [x] Sequence preserved (1..3)
+- [x] Tests:
+  - [x] each team gets exactly 3 robot matches
+  - [x] no double-booking
+  - [x] assigned table is valid for that slot
+  - [x] deterministic output
 
 ### 6.4 Enforce hard constraints (v1 core)
 - [ ] Add per-team calendar checks during assignment:
