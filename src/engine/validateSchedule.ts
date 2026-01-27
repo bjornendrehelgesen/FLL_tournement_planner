@@ -232,5 +232,78 @@ export function validateSchedule(
     }
   }
 
+  const robotAssignments = assignments.filter(
+    (assignment) =>
+      assignment.type === AssignmentType.ROBOT_MATCH &&
+      assignment.sequence !== null,
+  );
+
+  const sequenceStats = (sequence: number) => {
+    let minStartMs = Infinity;
+    let maxEndMs = -Infinity;
+    let latestSlotId: string | null = null;
+    const assignmentsForSequence = robotAssignments.filter(
+      (assignment) => assignment.sequence === sequence,
+    );
+
+    for (const assignment of assignmentsForSequence) {
+      const slot = slotById.get(assignment.slotId);
+      if (!slot) continue;
+      if (slot.startMs < minStartMs) {
+        minStartMs = slot.startMs;
+      }
+      if (slot.endMs > maxEndMs) {
+        maxEndMs = slot.endMs;
+        latestSlotId = slot.id;
+      }
+    }
+
+    return {
+      minStartMs,
+      maxEndMs,
+      latestSlotId,
+      assignments: assignmentsForSequence,
+    };
+  };
+
+  const checkSequenceOrder = (previous: number, next: number) => {
+    const previousStats = sequenceStats(previous);
+    const nextStats = sequenceStats(next);
+    if (previousStats.maxEndMs === -Infinity || nextStats.minStartMs === Infinity) {
+      return;
+    }
+    if (previousStats.maxEndMs <= nextStats.minStartMs) {
+      return;
+    }
+
+    const violatingNext = nextStats.assignments.filter((assignment) => {
+      const slot = slotById.get(assignment.slotId);
+      return slot ? slot.startMs < previousStats.maxEndMs : false;
+    });
+    const slotIds = new Set<string>();
+    const teamIds = new Set<TeamId>();
+
+    for (const assignment of violatingNext) {
+      slotIds.add(assignment.slotId);
+      teamIds.add(assignment.teamId);
+    }
+    if (previousStats.latestSlotId) {
+      slotIds.add(previousStats.latestSlotId);
+    }
+
+    conflicts.push(
+      buildConflict(
+        ScheduleConflictType.ROBOT_SEQUENCE_ORDER_VIOLATION,
+        `Robot match ${next} starts before all match ${previous} are completed.`,
+        Array.from(teamIds),
+        Array.from(slotIds),
+        [],
+      ),
+    );
+  };
+
+  checkSequenceOrder(1, 2);
+  checkSequenceOrder(2, 3);
+
   return conflicts;
 }

@@ -76,6 +76,7 @@ export const ScheduleConflictType = {
   DOUBLE_BOOK_RESOURCE: "DOUBLE_BOOK_RESOURCE",
   OUTSIDE_WINDOW: "OUTSIDE_WINDOW",
   IN_BREAK: "IN_BREAK",
+  ROBOT_SEQUENCE_ORDER_VIOLATION: "ROBOT_SEQUENCE_ORDER_VIOLATION",
 } as const;
 export type ScheduleConflictType =
   (typeof ScheduleConflictType)[keyof typeof ScheduleConflictType];

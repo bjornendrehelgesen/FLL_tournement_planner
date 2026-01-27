@@ -9,7 +9,7 @@ interface AssignRobotMatchesInput {
 }
 
 interface RobotCell {
-  slotId: string;
+  slot: Slot;
   tableId: number;
 }
 
@@ -29,7 +29,7 @@ function buildCells(slots: Slot[]): RobotCell[] {
   for (const slot of slots) {
     const tableIds = [...(slot.resources.tableIds ?? [])].sort((a, b) => a - b);
     for (const tableId of tableIds) {
-      cells.push({ slotId: slot.id, tableId });
+      cells.push({ slot, tableId });
     }
   }
 
@@ -37,7 +37,7 @@ function buildCells(slots: Slot[]): RobotCell[] {
 }
 
 function cellKey(cell: RobotCell): string {
-  return `${cell.slotId}::${cell.tableId}`;
+  return `${cell.slot.id}::${cell.tableId}`;
 }
 
 export function assignRobotMatches({
@@ -51,13 +51,17 @@ export function assignRobotMatches({
   const usedCells = new Set<string>();
   const slotsByTeam = new Map<number, Set<string>>();
 
+  let minStartMs = Number.NEGATIVE_INFINITY;
+
   for (let sequence = 1; sequence <= MATCHES_PER_TEAM; sequence += 1) {
+    let phaseEndMs = minStartMs;
     for (const team of orderedTeams) {
       const usedSlots = slotsByTeam.get(team.id) ?? new Set<string>();
       const cell = cells.find(
         (candidate) =>
+          candidate.slot.startMs >= minStartMs &&
           !usedCells.has(cellKey(candidate)) &&
-          !usedSlots.has(candidate.slotId),
+          !usedSlots.has(candidate.slot.id),
       );
 
       if (!cell) {
@@ -65,18 +69,23 @@ export function assignRobotMatches({
       }
 
       usedCells.add(cellKey(cell));
-      usedSlots.add(cell.slotId);
+      usedSlots.add(cell.slot.id);
       slotsByTeam.set(team.id, usedSlots);
+      if (cell.slot.endMs > phaseEndMs) {
+        phaseEndMs = cell.slot.endMs;
+      }
 
       assignments.push({
-        id: `robot-${team.id}-${cell.slotId}-${cell.tableId}-${sequence}`,
+        id: `robot-${team.id}-${cell.slot.id}-${cell.tableId}-${sequence}`,
         teamId: team.id,
         type: AssignmentType.ROBOT_MATCH,
-        slotId: cell.slotId,
+        slotId: cell.slot.id,
         resourceId: String(cell.tableId),
         sequence,
       });
     }
+
+    minStartMs = phaseEndMs;
   }
 
   return assignments;

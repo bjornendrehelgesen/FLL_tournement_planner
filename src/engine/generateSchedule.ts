@@ -281,13 +281,19 @@ export function generateSchedule(setup: TournamentSetup): GenerateScheduleResult
     }
   }
 
+  let minStartMs = Number.NEGATIVE_INFINITY;
+
   for (let sequence = 1; sequence <= MATCHES_PER_TEAM; sequence += 1) {
+    let phaseEndMs = minStartMs;
     for (const team of orderedTeams) {
       let assigned = false;
       let sawGapFailure = false;
       let sawOverlapFailure = false;
 
       for (const cell of robotCells) {
+        if (cell.slot.startMs < minStartMs) {
+          continue;
+        }
         const cellKey = `${cell.slot.id}::${cell.tableId}`;
         if (usedRobotCells.has(cellKey)) {
           continue;
@@ -324,6 +330,9 @@ export function generateSchedule(setup: TournamentSetup): GenerateScheduleResult
           buildCalendarEvent(assignment, cell.slot),
           placement.index ?? 0,
         );
+        if (cell.slot.endMs > phaseEndMs) {
+          phaseEndMs = cell.slot.endMs;
+        }
 
         assigned = true;
         break;
@@ -347,6 +356,8 @@ export function generateSchedule(setup: TournamentSetup): GenerateScheduleResult
         };
       }
     }
+
+    minStartMs = phaseEndMs;
   }
 
   return {

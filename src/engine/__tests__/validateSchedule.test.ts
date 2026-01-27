@@ -54,6 +54,7 @@ function buildAssignment(
   type: Assignment["type"],
   slotId: string,
   resourceId: string,
+  sequence: number | null = null,
 ): Assignment {
   return {
     id,
@@ -61,7 +62,7 @@ function buildAssignment(
     type,
     slotId,
     resourceId,
-    sequence: null,
+    sequence,
   };
 }
 
@@ -286,6 +287,72 @@ describe("validateSchedule", () => {
         AssignmentType.PRESENTATION,
         "pres-10",
         "1",
+      ),
+    ];
+
+    const conflicts = validateSchedule(setup, slots, assignments);
+
+    expect(conflicts).toHaveLength(0);
+  });
+
+  it("detects robot sequence ordering violations", () => {
+    const setup = buildSetup({});
+    const slots = [
+      buildSlot("robot-0", Track.ROBOT, 0, 10, { tableIds: [1] }),
+      buildSlot("robot-5", Track.ROBOT, 5, 15, { tableIds: [1] }),
+    ];
+    const assignments = [
+      buildAssignment(
+        "a1",
+        1,
+        AssignmentType.ROBOT_MATCH,
+        "robot-0",
+        "1",
+        1,
+      ),
+      buildAssignment(
+        "a2",
+        2,
+        AssignmentType.ROBOT_MATCH,
+        "robot-5",
+        "1",
+        2,
+      ),
+    ];
+
+    const conflicts = validateSchedule(setup, slots, assignments);
+
+    expect(conflicts).toHaveLength(1);
+    expect(conflicts[0]?.type).toBe(
+      ScheduleConflictType.ROBOT_SEQUENCE_ORDER_VIOLATION,
+    );
+    expect(conflicts[0]?.message).toBe(
+      "Robot match 2 starts before all match 1 are completed.",
+    );
+  });
+
+  it("allows sequence 2 to start when sequence 1 ends", () => {
+    const setup = buildSetup({});
+    const slots = [
+      buildSlot("robot-0", Track.ROBOT, 0, 10, { tableIds: [1] }),
+      buildSlot("robot-10", Track.ROBOT, 10, 20, { tableIds: [1] }),
+    ];
+    const assignments = [
+      buildAssignment(
+        "a1",
+        1,
+        AssignmentType.ROBOT_MATCH,
+        "robot-0",
+        "1",
+        1,
+      ),
+      buildAssignment(
+        "a2",
+        2,
+        AssignmentType.ROBOT_MATCH,
+        "robot-10",
+        "1",
+        2,
       ),
     ];
 
