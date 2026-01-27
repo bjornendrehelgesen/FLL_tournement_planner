@@ -16,3 +16,5 @@ Unit + perf-ish tests:
 Wire it in:
 - generateSchedule uses repairLoop by default.
 - App unchanged besides benefitting from improved success rate.
+
+Done

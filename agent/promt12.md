@@ -14,3 +14,5 @@ For failure schedules:
 
 Wire it in:
 - Ensure “npm test” runs both unit and property tests (or add separate script but keep CI default strong).
+
+Done

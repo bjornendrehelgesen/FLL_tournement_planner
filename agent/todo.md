@@ -254,20 +254,20 @@
 
 ## 7) Property-Based Testing (Engine)
 
-- [ ] Add fast-check property tests that generate random setups:
-  - [ ] teams 2..40
-  - [ ] minGap 15..45
-  - [ ] windows sometimes tight to induce failure
-  - [ ] random non-overlapping breaks within windows
-- [ ] For successful schedules assert invariants:
-  - [ ] exactly N presentations
-  - [ ] exactly 3N robot matches
-  - [ ] `validateSchedule` returns no conflicts
-  - [ ] assignments reference valid slot/resource
-- [ ] For failures assert:
-  - [ ] structured error codes only
+- [x] Add fast-check property tests that generate random setups:
+  - [x] teams 2..40
+  - [x] minGap 15..45
+  - [x] windows sometimes tight to induce failure
+  - [x] random non-overlapping breaks within windows
+- [x] For successful schedules assert invariants:
+  - [x] exactly N presentations
+  - [x] exactly 3N robot matches
+  - [x] `validateSchedule` returns no conflicts
+  - [x] assignments reference valid slot/resource
+- [x] For failures assert:
+  - [x] structured error codes only
   - [ ] suggestions present when applicable
-- [ ] Ensure property tests are part of default `npm test` (or a strong CI script)
+- [x] Ensure property tests are part of default `npm test` (or a strong CI script)
 
 ---
 
