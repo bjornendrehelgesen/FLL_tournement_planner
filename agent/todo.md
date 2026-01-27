@@ -199,20 +199,20 @@
 ## 6) Scheduling Engine v0 → v1 (TDD)
 
 ### 6.1 Engine output contract
-- [ ] Implement `generateSchedule(setup)` that returns:
-  - [ ] `ValidSchedule` (slots + assignments + warnings)
-  - [ ] OR `ScheduleFailure` (errors + suggestions)
-- [ ] Ensure deterministic behavior (stable ordering)
+- [x] Implement `generateSchedule(setup)` that returns:
+  - [x] `ValidSchedule` (slots + assignments + warnings)
+  - [x] OR `ScheduleFailure` (errors + suggestions)
+- [x] Ensure deterministic behavior (stable ordering)
 
 ### 6.2 Assign presentations first (simple first-fit)
-- [ ] Implement `assignPresentations(setup, presentationSlots)`:
-  - [ ] Teams 1..N
-  - [ ] Earliest available slot/room first-fit
-  - [ ] No room double-booking in same slot
-- [ ] Tests:
-  - [ ] N teams assigned exactly once
-  - [ ] deterministic mapping
-  - [ ] respects capacity (assume checked earlier)
+- [x] Implement `assignPresentations(setup, presentationSlots)`:
+  - [x] Teams 1..N
+  - [x] Earliest available slot/room first-fit
+  - [x] No room double-booking in same slot
+- [x] Tests:
+  - [x] N teams assigned exactly once
+  - [x] deterministic mapping
+  - [x] respects capacity (assume checked earlier)
 
 ### 6.3 Assign robots (3 matches per team)
 - [ ] Implement `assignRobotMatches(setup, robotSlots)`:

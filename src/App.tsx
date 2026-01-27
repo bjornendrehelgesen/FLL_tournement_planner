@@ -1,5 +1,11 @@
 import "./App.css";
-import { capacityCheck, validateSchedule, validateSetup } from "./engine";
+import { useState } from "react";
+import {
+  capacityCheck,
+  generateSchedule,
+  validateSchedule,
+  validateSetup,
+} from "./engine";
 import { presentationSlots } from "./engine/slots/presentationSlots";
 import { robotSlots } from "./engine/slots/robotSlots";
 import { AssignmentType, Track } from "./domain";
@@ -60,6 +66,7 @@ const conflictAssignments: Assignment[] = [
 ];
 
 function App() {
+  const [draftCount, setDraftCount] = useState<number | null>(null);
   const validationResult = validateSetup(setup);
   const engineStatus = validationResult.ok
     ? "Setup OK"
@@ -87,6 +94,19 @@ function App() {
     conflictAssignments,
   );
 
+  const handleGenerateDraft = () => {
+    const result = generateSchedule(setup);
+    if (!result.ok) {
+      setDraftCount(0);
+      return;
+    }
+
+    const presentationAssignments = result.schedule.assignments.filter(
+      (assignment) => assignment.type === AssignmentType.PRESENTATION,
+    );
+    setDraftCount(presentationAssignments.length);
+  };
+
   return (
     <div className="app">
       <header className="app-header">
@@ -109,6 +129,13 @@ function App() {
         <p>Robot slots: {robotSlotsList.length}</p>
         <p>Robot capacity: {robotCapacity} (sum of active tables)</p>
         <p>Conflicts: {conflicts.length}</p>
+        <button type="button" onClick={handleGenerateDraft}>
+          Generate Draft
+        </button>
+        <p>
+          Presentation assignments:{" "}
+          {draftCount === null ? "Not generated" : draftCount}
+        </p>
       </section>
     </div>
   );
