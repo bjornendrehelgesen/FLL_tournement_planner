@@ -17,3 +17,5 @@ Testing:
 Wire it in:
 - App uses stateful setup from UI, not hard-coded values.
 - Generate button calls generateSchedule(setup) and stores result in state.
+
+Done

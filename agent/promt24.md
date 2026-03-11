@@ -15,3 +15,5 @@ Add Playwright tests:
 
 Wire it in:
 - Ensure npm run test:e2e runs these tests headlessly.
+
+Done

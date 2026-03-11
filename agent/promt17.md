@@ -13,3 +13,4 @@ Tests:
 Wire it in:
 - Mode switch + validate action are visible in Schedule view.
 
+Done

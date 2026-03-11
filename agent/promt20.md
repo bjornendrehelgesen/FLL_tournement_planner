@@ -20,3 +20,5 @@ Tests:
 
 Wire it in:
 - Mode toggle now enables/disables auto behavior for presentations.
+
+Done
